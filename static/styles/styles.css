@@ -1,0 +1,88 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    height: 100vh;
+    background-color: #151b29;
+    color: white;
+    font-family: 'Merriweather', serif;;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    display: flex;
+    margin: 0 auto 20px auto;
+    width: 85%;
+    flex-wrap: wrap;
+    gap: 5px;
+    flex-direction: row;
+    justify-content: center;
+}
+.container input {
+    flex: 1;
+}
+
+.container + .longinput {
+    width: 85%;
+    color: red;
+    flex-direction: column;
+}
+.container+.longinput input {
+    min-width: 35%;
+    flex: 1;
+}
+
+input {
+    background: none;
+    color: #d78006;
+    border: 2px solid;
+    /* max-width: 200px; */
+    border-radius: 5px;
+    padding: 1em 2em;
+    font-size: 1em;
+    transition: color 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+    text-align: center;
+}
+
+input[placeholder] {
+    font-family: 'Merriweather', serif;;
+}
+
+input:hover {
+    border-color: #f1ff5c;
+    color: #f1ff5c;
+    box-shadow: 0 0.5em 0.5em -0.4em #f1ff5c;
+    transform: translateY(-0.25em);
+    cursor: auto;
+}
+input:hover::placeholder {
+    color: #f1ff5c;
+}
+
+input:focus {
+    outline: none;
+}
+input:focus::placeholder {
+    color: transparent;
+}
+
+#submit {
+    background-color: #d78006;
+    color: black;
+    border: 0 solid white;
+    border-radius: 5px;
+    margin: 0 auto;
+    text-align: center;
+    font-family: 'Merriweather', serif;
+}
+#submit:hover {
+    cursor: pointer;
+}
