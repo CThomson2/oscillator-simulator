@@ -7,7 +7,7 @@ body {
     height: 100vh;
     background-color: #151b29;
     color: white;
-    font-family: 'Merriweather', serif;;
+    font-family: 'Merriweather', serif;
 }
 
 form {
@@ -15,6 +15,15 @@ form {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+
+form h2 {
+    margin: 50px 10% 20px 10%
+}
+
+::placeholder {
+    color: #494e58;
+    font-family: 'Merriweather', serif;
 }
 
 .container {
@@ -30,20 +39,34 @@ form {
     flex: 1;
 }
 
-.container + .longinput {
+.init_conditions {
     width: 85%;
-    color: red;
     flex-direction: column;
 }
-.container+.longinput input {
+.init_conditions input, select, label {
     min-width: 35%;
+    border-color: #d78006;
+    border-radius: 5px;
     flex: 1;
+    color: #494e58;
+    background-color: #151b29;
+}
+.init_conditions label {
+    margin: 25px auto 10px auto;
+    color: white;
+}
+.init_conditions select {
+    font-family: 'Merriweather', serif;
+    color: #494e58;
+    text-align: center;
+    font-size: large;
 }
 
-input {
+.input {
     background: none;
     color: #d78006;
     border: 2px solid;
+    outline: none;
     /* max-width: 200px; */
     border-radius: 5px;
     padding: 1em 2em;
@@ -52,26 +75,29 @@ input {
     text-align: center;
 }
 
-input[placeholder] {
-    font-family: 'Merriweather', serif;;
-}
-
-input:hover {
+.active-inp:hover {
     border-color: #f1ff5c;
     color: #f1ff5c;
     box-shadow: 0 0.5em 0.5em -0.4em #f1ff5c;
     transform: translateY(-0.25em);
     cursor: auto;
 }
-input:hover::placeholder {
+.active-inp:hover::placeholder {
     color: #f1ff5c;
 }
 
-input:focus {
+.active-inp:focus {
     outline: none;
 }
-input:focus::placeholder {
+.active-inp:active {
+    outline: 1px solid #f1ff5c;
+}
+.active-inp:focus::placeholder {
     color: transparent;
+}
+
+#init_cond {
+    border: 2px solid #d78006;
 }
 
 #submit {
@@ -82,7 +108,18 @@ input:focus::placeholder {
     margin: 0 auto;
     text-align: center;
     font-family: 'Merriweather', serif;
+    font-size: large;
+    padding: 20px 30px;
 }
 #submit:hover {
     cursor: pointer;
+}
+
+.hidden {
+    display: none;
+}
+
+.input[disabled=true] {
+    border-color: #838893;
+    color: #494e58;
 }

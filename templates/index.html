@@ -11,21 +11,47 @@
     <title>Simulation Parameters</title>
 </head>
 <body>
-    <h1>Input parameters for Fermi-Pasta simulation below.</h1>
+    <h1>Fermi-Pasta Simulation</h1>
     <form action="result" method="POST">
-        <section class="container">
-            <input type="text" name="length" placeholder="String length" />
-            <input type="text" name="simtime" placeholder="Total simulation time" />
-            <input type="text" name="nosc" placeholder="Number of oscillators" />
-            <input type="text" name="ymod" placeholder="Young's modulus" />
-            <input type="text" name="rho" placeholder="Length density of string" />
-            <input type="text" name="alpha" placeholder="Non-linear coefficient" />
+        <h2>Input numerical parameters for simulation</h2>
+        <section class="container params">
+            <input onChange="showItems()" class="input active-inp" type="text" name="L" placeholder="String length" />
+            <input onChange="showItems()" class="input active-inp" type="text" name="tf" placeholder="Total simulation time" />
+            <input onChange="showItems()" class="input active-inp" type="text" name="N" placeholder="Number of oscillators" />
+            <input onChange="showItems()" class="input active-inp" type="text" name="k" placeholder="Young's modulus" />
+            <input onChange="showItems()" class="input active-inp" type="text" name="rho" placeholder="Length density of string" />
+            <input onChange="showItems()" class="input active-inp" type="text" name="alpha" placeholder="Non-linear coefficient" />
         </section>
-        <section class="container longinput">
-            <input type="text" name="initamp" placeholder="Amplitude of initial condition" />
-            <input type="text" name="stringshape" placeholder="Initial conditions string shape (sine, half-sine or parabola)" />
+        <h2 class="hidden">Input initial conditions at time t=0 (what shape does the string take initially?)</h2>
+        <section class="container init_conditions hidden">
+            <input onChange="showItems()" class="input active-inp" type="text" name="pert_ini" placeholder="Amplitude of initial condition (or height of parabola)" />
+            <label for="init_cond">Initial conditions string shape (sine, half-sine or parabola)</label>
+            <select onChange="showItems()" class="input active-inp" name="init_cond" id="init_cond">
+                <option value="sine">Sine</option>
+                <option value="half-sine">Half-sine</option>
+                <option value="parabola">Parabola</option>
+            </select>
         </section>
-        <input id="submit" type="submit" value="submit" />
+        <input id="submit" class="hidden" type="submit" value="submit" />
     </form>
+
+    <script>
+        function showItems() {
+            const inputs = document.querySelectorAll('.params input');
+            let flag = 0
+            if ([...inputs].every(el => {
+                return typeof parseFloat(el.value) == "number" && !isNaN(parseFloat(el.value))
+            })) {
+                flag = true
+            }
+            if (flag) {
+                document.querySelectorAll('.hidden').forEach(item => item.classList.remove('hidden'))
+                document.querySelectorAll('.params input').forEach(item => item.classList.remove('active-inp'))
+                inputs.forEach(el => {
+                    el.setAttribute('disabled', true)
+                })
+            }
+        }
+    </script>
 </body>
 </html>

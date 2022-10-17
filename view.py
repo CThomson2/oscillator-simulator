@@ -7,22 +7,25 @@ print("For best results, please use Google Chrome for browser-based GUI")
 
 
 @app.route('/')
-def student():
+def index():
     return render_template('index.html')
 
 
 @app.route('/result', methods=['POST', 'GET'])
-def result():
+def get_result():
     if request.method == 'POST':
         result = request.form
         data = result.to_dict()
         for param in data:
             print(data[param])
-        # main.main_function(data)
+        # main.simulate(data)
+
+        # change the second parameter below to the data we analyse in main.py.
+        # after the main computation we will display the useful output data on result.html using templating
         return render_template("result.html", result=result)
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=8888, debug=True)
 
 print('hello world')
