@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
-# import main
+import main
+import time
 
 app = Flask(__name__)
 
@@ -18,7 +19,7 @@ def get_result():
         data = result.to_dict()
         for param in data:
             print(param, data[param])
-        # main.simulate(data)
+        main.simulate(data)
 
         # change the second parameter below to the data we analyse in main.py.
         # after the main computation we will display the useful output data on result.html using templating
@@ -27,5 +28,3 @@ def get_result():
 
 if __name__ == '__main__':
     app.run(port=8888, debug=True)
-
-print('hello world')

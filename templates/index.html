@@ -12,27 +12,28 @@
 </head>
 <body>
     <h1>Fermi-Pasta Simulation</h1>
+    <h2><em>Ada, Angus, Conrad, Harry</em></h2>
     <form action="result" method="POST">
         <h2>Input numerical parameters for simulation</h2>
         <section class="container params">
-            <input onChange="showItems()" class="input active-inp" type="text" name="L" placeholder="String length" />
-            <input onChange="showItems()" class="input active-inp" type="text" name="tf" placeholder="Total simulation time" />
-            <input onChange="showItems()" class="input active-inp" type="text" name="N" placeholder="Number of oscillators" />
-            <input onChange="showItems()" class="input active-inp" type="text" name="k" placeholder="Young's modulus" />
-            <input onChange="showItems()" class="input active-inp" type="text" name="rho" placeholder="Length density of string" />
-            <input onChange="showItems()" class="input active-inp" type="text" name="alpha" placeholder="Non-linear coefficient" />
+            <input onchange="showItems()" class="input active-inp" type="text" name="L" placeholder="String length" />
+            <input onchange="showItems()" class="input active-inp" type="text" name="tf" placeholder="Total simulation time" />
+            <input onchange="showItems()" class="input active-inp" type="text" name="N" placeholder="Number of oscillators" />
+            <input onchange="showItems()" class="input active-inp" type="text" name="k" placeholder="Young's modulus" />
+            <input onchange="showItems()" class="input active-inp" type="text" name="rho" placeholder="Length density of string" />
+            <input onchange="showItems()" class="input active-inp" type="text" name="alpha" placeholder="Non-linear coefficient" />
         </section>
         <h2 class="hidden">Input initial conditions at time t=0 (what shape does the string take initially?)</h2>
         <section class="container init_conditions hidden">
-            <input onChange="showItems()" class="input active-inp" type="text" name="pert_ini" placeholder="Amplitude of initial condition (or height of parabola)" />
+            <input onchange="showItems()" class="input active-inp" type="text" name="pert_ini" placeholder="Amplitude of initial condition (or height of parabola)" />
             <label for="init_cond"><h2>Initial conditions string shape (sine, half-sine or parabola)</h2></label>
-            <select onChange="showItems()" class="input active-inp" name="init_cond" id="init_cond">
+            <select onchange="showItems()" class="input active-inp" name="init_type" id="init_cond">
                 <option value="sine">Sine</option>
                 <option value="half-sine">Half-sine</option>
                 <option value="parabola">Parabola</option>
             </select>
         </section>
-        <input id="submit" class="hidden" type="submit" value="submit" />
+        <input onclick="hideAll()" id="submit" class="hidden" type="submit" value="submit" />
     </form>
 
     <script>
@@ -51,6 +52,9 @@
                     el.setAttribute('readonly', true)
                 })
             }
+        }
+        function hideAll() {
+            document.body.classList.add('hidden');
         }
     </script>
 </body>
