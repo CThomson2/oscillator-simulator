@@ -2,7 +2,7 @@
 
 ## HTML GUI
 
-### Two HTML forms.
+### Two HTML forms
 
 #### Form 1
 
@@ -26,4 +26,35 @@
 - Take data from user and call main "simulate()" function with paramaters
 - Represent processed data and solution on new HTML page to show user
 
+---
+
 ## Solve System of ODEs
+
+### Simultaneous Equations
+
+- dx_i/dt for every oscillator i, i.e. N simultaneous equations
+
+### Perform RungeKutta OR Euler method on d^2x/dt^2 to determine discretised velocities
+
+- #### Create array of arrays, where each array holds all velocity values for one of N oscillators
+
+### Repeat process for dx/dt for displacements
+
+- #### Instead of using a derivative function, we'll have to index the velocity arrrays to find dx_i/dt at each time-step, unless we can work out the analytical derivative of x_i(t). This would produce better accuracy.
+
+---
+
+## Plot x(t, i)
+
+- X-axis will be the distance along string (i-value)
+- To show the progression through time, we will either animate the graph or plot M graphs in one figure, where M is the number of time-steps between t_0 and t_final
+  - Matplotlib has an animation class
+
+---
+
+---
+
+## Additional Features
+
+- If user inputs a step size large enough to cause instability, kill the program and print error OR even prevent user from submitting the Parameters form if their h value is too high - we will need to work out k first to determine the region of stability
+- Create a range of preset polynomials that satisfy the boundary conditions for the user to choose from when setting initial conditions. Create a button that when clicked unhides a subsection of polynomial graphs that can be clicked.

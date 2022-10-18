@@ -17,7 +17,7 @@ def get_result():
         result = request.form
         data = result.to_dict()
         for param in data:
-            print(data[param])
+            print(param, data[param])
         # main.simulate(data)
 
         # change the second parameter below to the data we analyse in main.py.

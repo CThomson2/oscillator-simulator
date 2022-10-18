@@ -25,7 +25,7 @@
         <h2 class="hidden">Input initial conditions at time t=0 (what shape does the string take initially?)</h2>
         <section class="container init_conditions hidden">
             <input onChange="showItems()" class="input active-inp" type="text" name="pert_ini" placeholder="Amplitude of initial condition (or height of parabola)" />
-            <label for="init_cond">Initial conditions string shape (sine, half-sine or parabola)</label>
+            <label for="init_cond"><h2>Initial conditions string shape (sine, half-sine or parabola)</h2></label>
             <select onChange="showItems()" class="input active-inp" name="init_cond" id="init_cond">
                 <option value="sine">Sine</option>
                 <option value="half-sine">Half-sine</option>
@@ -48,7 +48,7 @@
                 document.querySelectorAll('.hidden').forEach(item => item.classList.remove('hidden'))
                 document.querySelectorAll('.params input').forEach(item => item.classList.remove('active-inp'))
                 inputs.forEach(el => {
-                    el.setAttribute('disabled', true)
+                    el.setAttribute('readonly', true)
                 })
             }
         }
