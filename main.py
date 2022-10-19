@@ -2,6 +2,7 @@
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.integrate import solve_ivp
 import webbrowser
 import os
 
@@ -10,12 +11,12 @@ from initial_conditions import get_init
 
 # Boundary Conditions
 # since x_0(t) = x_L(t) = 0, velocity at the boundaries is also a constant zero
+x0 = 0
+xL = 0
 v0 = 0
 vL = 0
 
 # Move this function to its own file later
-
-
 # def euler(t, x):
 
 
@@ -33,17 +34,43 @@ def simulate(data):
     L, tf, N, k, rho, alpha, pert_ini = destruct(
         data, 'L', 'tf', 'N', 'k', 'rho', 'alpha', 'pert_ini')
     init_type = data['init_type']
+    tf = int(tf)
     N = int(N)
+    print('L', 'tf', 'N', 'k', 'rho', 'alpha', 'pert_ini', 'init_type')
     print(L, tf, N, k, rho, alpha, pert_ini, init_type)
 
     # calculate stepsize (distance between oscillators) and mass of each oscillator
     h = L / (N - 1)  # step size
     m = rho * h  # mass of osc.
     # array holding positions of oscillators along string
+    # will be used as the x-axis for plotting variables of interest along length of string
     pos_lattice = [i * h for i in range(N)]
-    # choose a timestep
-    dt = 0.01
+    # choose a timestep (also in ms)
+    dt = 1
     n_step = math.ceil(tf / dt)
+    # create time-step array
+    t = np.linspace(0, tf - 1, n_step)
+    # create arrays that will hold all displacements, velocities and accelerations in the 2D space of discretised time and distance along string
+    x = []
+    v = []
+    a = []
+    # 2D array will hold an array of displacements for each time-step
+    for i in range(n_step + 1):
+        x.append(np.zeros(N + 1))
+        v.append(np.zeros(N + 1))
+        a.append(np.zeros(N + 1))
+
+    print(len(x))
+
+    # define governing acceleration equation for ease of access
+    def get_acc(t, i):
+        # check for boundary conditions
+        if i in [0, N - 1]:
+            return 0
+        j = int(t / tf * n_step)
+        # otherwise use i parameter to determine the acceleration of the i-th oscillator
+        return k / m * (x[j][i + 1] + x[j][i - 1] - 2 * x[j][i]) * \
+            (1 + alpha * (x[j][i + 1] - x[j][i - 1]))
 
     # def vel_model(i, t):
     #     return k / m * (x_rk[i] + x_rk[i - 2] - 2 * x_rk[i - 1]) * (1 + alpha * (x_rk[i] - x[i - 2]))
@@ -53,11 +80,15 @@ def simulate(data):
     # Method: create a 2D array to store arrays of velocities at each time-step for each oscillator
     # -----
 
+    # -----
     # STEP 1: create function to find initial displacement from user-specified conditions
-    # > function exported to and located in initial_conditions.py
+    # Additionally, store initial velocities and accelerations in main solution array
+    # -----
+
+    # function get_init exported to and located in initial_conditions.py
     init_disp = get_init(L, N, pert_ini, init_type, h, pos_lattice)
-    plt.plot([i * h for i in range(N)], init_disp, 'r.-')
-    plt.savefig(f'./static/img/graph.png')
+    # plt.plot([i * h for i in range(N)], init_disp, 'r.-')
+    # plt.savefig(f'./static/img/graph.png')
     # plt.show()
 
     # -----
@@ -66,14 +97,91 @@ def simulate(data):
     # webbrowser.open_new_tab(filename)
     # -----
 
-    # -----
+    #
+
+    x[0] = init_disp
+
     # Clearly, the initial velocity is zero at every point
     init_vel = np.zeros(N)
+    v[0] = init_vel
+
+    # Initial acceleration can be found using values for displacement
+    a[0][0] = 0
+    a[0][N - 1] = 0
+    for i in range(1, N - 1):
+        a[0][i] = get_acc(0, i)
+
+    # plt.figure(figsize=(6, 3))
+    # plt.subplot(131)
+    # plt.plot(pos_lattice, x[0], 'b.-')
+    # plt.xlabel('string')
+    # plt.ylabel('displacement')
+    # plt.subplot(132)
+    # plt.plot(pos_lattice, a[0], 'r.-')
+    # plt.xlabel('string')
+    # plt.ylabel('acceleration')
+
+    # plt.show()
+
+    # print('Mass:', m, 'Step size h:', h, 'Length density rho:', rho)
+    # print(
+    #     f'Init. Disp: {x[0]}, \n\nInit. Vel: {v[0]}, \n\nInit. Acc: {a[0]}\n')
+
+    # -----
+    # STEP 2: Taking slices of time, we study the velocities and displacements of each oscillator using provided recurrence relations
     # -----
 
-    # STEP 2:
+    # -----
+    # To find displacement at any given point, we need its derivative: velocity.
+    # To find velocity, we need the acceleration at that point.
+    # Thus, we need to fill the velocity and displacement arrays iteratively.
+    # i.e. we find velocity at point i at time-step j using the formula for acceleration at point i at time-step j-1
+    # We do this for all oscillators i in-between the boundary conditions, which remain at zero displacement throughout
+    # Next, we find displacement at point i at time-step j using the indexed value for velocity that we just found and
+    #   stored in the appropriate location in the global velocity array.
+    # Before this algorithm, we can fill some rows in the 2D grids (arrays) for v and x
+    # We have already inserted the initial conditions, but we also know the displacement at time 0 + ∂t (i.e. first time step)
+    # Since v_0(t) = 0, the displacement cannot change in the second time-step. Therefore x_i(t1) = x_i(t0)
 
-    # for i in range(N):
+    print()
+
+    def accel_model(t, v):
+        # print(t, v)
+        acc = [0] + [get_acc(t, i) for i in range(1, N - 1)] + [0]
+        return acc
+
+    # throughout this program, i is associated with position along string and j with time-step
+    # pattern is continued here for clarity and consistency
+    # iterating through time-steps
+    for j in range(1, n_step + 1):
+        # iterating through oscillators on string
+        for i in range(0, N - 1):
+            slope = accel_model()
+            v[j + 1][i] = v[j][i] + get_acc(t[j], v)
+
+    #######
+    #######
+    #######
+    #######
+    #######
+
+    t_eval = np.linspace(0, tf - 1, num=tf)
+    v_out = solve_ivp(accel_model, [0, tf], v[0], t_eval=t_eval)
+    print('len:', len(v_out.y[0]))
+    print()
+    print(len(v_out.y), len(v_out.y[2]))
+    print(len(v), len(v[2]))
+    for i in range(len(v_out.y)):
+        for j in range(len(v_out.y[2])):
+            v[j][i] = v_out.y[i][j]
+
+    print(v)
+
+    # for step in n_step:
+    #     for osc in N:
+
+    # def model(t, v):
+    #     for vel in v:
 
     # t_eul_i = np.zeros(n_step + 1)
     # v_eul_i = np.zeros(n_step + 1)
@@ -82,18 +190,19 @@ def simulate(data):
     # for j in range(n_step):
     #     v_eul_i[j + 1] = euler(j, i)
 
-# -----
+    # -----
+
+    # Hardcoded parameters for testing and debugging
 
 
-# Hardcoded parameters for testing and debugging
 L = 1
-t_final = 10
-N = 8
+t_final = 20
+N = 5
 k = 0.1
 rho = 400
-alpha = 0.25
+alpha = 0
 pert_ini = 3.0
-init_type = 'sine'
+init_type = 'half-sine'
 
 simulate({'L': L, 'tf': t_final, 'N': N, 'k': k, 'rho': rho,
          'alpha': alpha, 'pert_ini': pert_ini, 'init_type': init_type})
