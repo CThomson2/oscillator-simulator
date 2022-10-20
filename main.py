@@ -46,31 +46,35 @@ def simulate(data):
     # will be used as the x-axis for plotting variables of interest along length of string
     pos_lattice = [i * h for i in range(N)]
     # choose a timestep (also in ms)
+
+    # IMPORTANT - dt shouldn't be hardset to 1. Sometimes that will be too large.
     dt = 1
+    # But, if it's less than 1, the t array will contain decimals (e.g. t = [0, 0.2, 0.4, ... , 99.8, 100])
+    # Clearly, you'll need to normalise the times so that the time step is equal to 1, which will increase
+    # the final time. This means that when you plot the time, you need to use the original timescale provided
+    # by the user.
+
     n_step = math.ceil(tf / dt)
     # create time-step array
-    t = np.linspace(0, tf - 1, n_step)
+    t = np.linspace(0, tf - 1, n_step, dtype=int)
     # create arrays that will hold all displacements, velocities and accelerations in the 2D space of discretised time and distance along string
     x = []
     v = []
     a = []
     # 2D array will hold an array of displacements for each time-step
-    for i in range(n_step + 1):
-        x.append(np.zeros(N + 1))
-        v.append(np.zeros(N + 1))
-        a.append(np.zeros(N + 1))
-
-    print(len(x))
+    for i in range(n_step):
+        x.append(np.zeros(N))
+        v.append(np.zeros(N))
+        a.append(np.zeros(N))
 
     # define governing acceleration equation for ease of access
     def get_acc(t, i):
         # check for boundary conditions
         if i in [0, N - 1]:
             return 0
-        j = int(t / tf * n_step)
+
         # otherwise use i parameter to determine the acceleration of the i-th oscillator
-        return k / m * (x[j][i + 1] + x[j][i - 1] - 2 * x[j][i]) * \
-            (1 + alpha * (x[j][i + 1] - x[j][i - 1]))
+        return k / m * (x[t][i + 1] + x[t][i - 1] - 2 * x[t][i]) * (1 + alpha * (x[t][i + 1] - x[t][i - 1]))
 
     # def vel_model(i, t):
     #     return k / m * (x_rk[i] + x_rk[i - 2] - 2 * x_rk[i - 1]) * (1 + alpha * (x_rk[i] - x[i - 2]))
@@ -143,66 +147,71 @@ def simulate(data):
     # We have already inserted the initial conditions, but we also know the displacement at time 0 + ∂t (i.e. first time step)
     # Since v_0(t) = 0, the displacement cannot change in the second time-step. Therefore x_i(t1) = x_i(t0)
 
-    print()
-
-    def accel_model(t, v):
-        # print(t, v)
-        acc = [0] + [get_acc(t, i) for i in range(1, N - 1)] + [0]
-        return acc
+    # print(f'\n{t}\n')
 
     # throughout this program, i is associated with position along string and j with time-step
     # pattern is continued here for clarity and consistency
     # iterating through time-steps
-    for j in range(1, n_step + 1):
+    for j in range(0, n_step - 1):
         # iterating through oscillators on string
-        for i in range(0, N - 1):
-            slope = accel_model()
-            v[j + 1][i] = v[j][i] + get_acc(t[j], v)
+        for i in range(1, N - 1):
+            v_slope = get_acc(t[j], i)
+            v[j + 1][i] = v[j][i] + v_slope * dt
+            x[j + 1][i] = x[j][i] + v[j][i] * dt
 
-    #######
-    #######
-    #######
-    #######
-    #######
+    # b1 = {
+    #     "x": [],
+    #     "v": []
+    # }
+    # for ball in x:
+    #     b1["x"].append(ball[4])
+    # for ball in v:
+    #     b1["v"].append(ball[4])
 
-    t_eval = np.linspace(0, tf - 1, num=tf)
-    v_out = solve_ivp(accel_model, [0, tf], v[0], t_eval=t_eval)
-    print('len:', len(v_out.y[0]))
-    print()
-    print(len(v_out.y), len(v_out.y[2]))
-    print(len(v), len(v[2]))
-    for i in range(len(v_out.y)):
-        for j in range(len(v_out.y[2])):
-            v[j][i] = v_out.y[i][j]
+    # plt.plot(t, b1["x"], 'r.-', t, b1["v"], 'g.-')
 
-    print(v)
+    # plt.figure(figsize=(9, 6))
 
-    # for step in n_step:
-    #     for osc in N:
+    # plt.subplot(131)
+    # plt.plot(pos_lattice, x[0])
+    # plt.subplot(132)
+    # plt.axes((0, -1.0, 1.0, 2.0))
+    # plt.plot(pos_lattice, x[100])
+    # # plt.axes((0, -1.0, 1.0, 1.0))
+    # plt.subplot(133)
+    # plt.plot(pos_lattice, x[200])
+    # plt.axes((0, -1.0, 1.0, 1.0))
+    # plt.subplot(1, 3, (2, 1))
+    # plt.plot(pos_lattice, x[3])
+    # plt.subplot(1, 3, (2, 2))
+    # plt.plot(pos_lattice, x[4])
 
-    # def model(t, v):
-    #     for vel in v:
+    plt.plot(pos_lattice, x[0], 'b-')
+    # plt.plot(pos_lattice, x[50], 'r--')
+    plt.plot(pos_lattice, x[80], 'b.-')
+    plt.plot(pos_lattice, x[1180], 'g-')
+    # plt.plot(pos_lattice, x[2000], 'g--')
+    # plt.plot(pos_lattice, x[2500], 'g.-')
+    # plt.plot(pos_lattice, x[3000], 'r-')
+    # plt.plot(pos_lattice, x[3500], 'r--')
+    # plt.plot(pos_lattice, x[7000], 'r.-')
 
-    # t_eul_i = np.zeros(n_step + 1)
-    # v_eul_i = np.zeros(n_step + 1)
-    # t_eul_i[0] = 0
-    # v_eul_i[0] =
-    # for j in range(n_step):
-    #     v_eul_i[j + 1] = euler(j, i)
+    # osc5 = [x[i][5] for i in range(len(t))]
+    # plt.plot(t, osc5, 'r-')
 
-    # -----
+    plt.show()
 
     # Hardcoded parameters for testing and debugging
 
 
 L = 1
-t_final = 20
-N = 5
+t_final = 5000
+N = 60
 k = 0.1
 rho = 400
 alpha = 0
-pert_ini = 3.0
-init_type = 'half-sine'
+pert_ini = 1.0
+init_type = 'parabola'
 
 simulate({'L': L, 'tf': t_final, 'N': N, 'k': k, 'rho': rho,
          'alpha': alpha, 'pert_ini': pert_ini, 'init_type': init_type})

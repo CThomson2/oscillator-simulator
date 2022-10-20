@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/styles/styles.css">
+    <title>Simulation Parameters</title>
+</head>
+<body>
+    <h1>Input parameters for Fermi-Pasta simulation below.</h1>
+    <form action="result" method="POST">
+        <section class="container">
+            <input type="text" name="L" placeholder="String length" />
+            <input type="text" name="tf" placeholder="Total simulation time" />
+            <input type="text" name="N" placeholder="Number of oscillators" />
+            <input type="text" name="k" placeholder="Young's modulus" />
+            <input type="text" name="rho" placeholder="Length density of string" />
+            <input type="text" name="alpha" placeholder="Non-linear coefficient" />
+        </section>
+        <section class="container longinput">
+            <input type="text" name="pert_ini" placeholder="Amplitude of initial condition" />
+            <input type="text" name="init_type" placeholder="Initial conditions string shape (sine, half-sine or parabola)" />
+        </section>
+        <input id="submit" type="submit" value="submit" />
+    </form>
+</body>
+</html>
