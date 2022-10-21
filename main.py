@@ -27,6 +27,7 @@ def simulate(data):
     # u_i: velocity of i-th oscillator (eqbm vel. is zero)
     # p_i: distance along string (can be represented as i*h)
     # t: time
+    print('new computer')
     # h: distance between oscillators (step size)
     # L: length of string
     # N: number of oscillators
