@@ -48,15 +48,16 @@ def simulate(data):
     # choose a timestep (also in ms)
 
     # IMPORTANT - dt shouldn't be hardset to 1. Sometimes that will be too large.
+    tf_norm = 1000
     dt = 1
     # But, if it's less than 1, the t array will contain decimals (e.g. t = [0, 0.2, 0.4, ... , 99.8, 100])
     # Clearly, you'll need to normalise the times so that the time step is equal to 1, which will increase
     # the final time. This means that when you plot the time, you need to use the original timescale provided
     # by the user.
 
-    n_step = math.ceil(tf / dt)
+    n_step = math.ceil(tf_norm / dt)
     # create time-step array
-    t = np.linspace(0, tf - 1, n_step, dtype=int)
+    t = np.linspace(0, tf_norm - 1, n_step, dtype=int)
     # create arrays that will hold all displacements, velocities and accelerations in the 2D space of discretised time and distance along string
     x = []
     v = []
@@ -72,12 +73,8 @@ def simulate(data):
         # check for boundary conditions
         if i in [0, N - 1]:
             return 0
-
         # otherwise use i parameter to determine the acceleration of the i-th oscillator
         return k / m * (x[t][i + 1] + x[t][i - 1] - 2 * x[t][i]) * (1 + alpha * (x[t][i + 1] - x[t][i - 1]))
-
-    # def vel_model(i, t):
-    #     return k / m * (x_rk[i] + x_rk[i - 2] - 2 * x_rk[i - 1]) * (1 + alpha * (x_rk[i] - x[i - 2]))
 
     # -----
     # Aim: to find the velocity of each oscillator at each point in time
@@ -101,8 +98,7 @@ def simulate(data):
     # webbrowser.open_new_tab(filename)
     # -----
 
-    #
-
+    # Set the oscillators' displacement at time t=0 to initial conditions
     x[0] = init_disp
 
     # Clearly, the initial velocity is zero at every point
@@ -187,9 +183,9 @@ def simulate(data):
     # plt.plot(pos_lattice, x[4])
 
     plt.plot(pos_lattice, x[0], 'b-')
-    # plt.plot(pos_lattice, x[50], 'r--')
-    plt.plot(pos_lattice, x[80], 'b.-')
-    plt.plot(pos_lattice, x[1180], 'g-')
+    plt.plot(pos_lattice, x[50], 'r--')
+    plt.plot(pos_lattice, x[120], 'b.-')
+    # plt.plot(pos_lattice, x[1180], 'g-')
     # plt.plot(pos_lattice, x[2000], 'g--')
     # plt.plot(pos_lattice, x[2500], 'g.-')
     # plt.plot(pos_lattice, x[3000], 'r-')
@@ -201,11 +197,16 @@ def simulate(data):
 
     plt.show()
 
+    # print()
+    # print(x[:5])
+    # print()
+    # print(v[:5])
+
     # Hardcoded parameters for testing and debugging
 
 
 L = 1
-t_final = 5000
+t_final = 500
 N = 60
 k = 0.1
 rho = 400
