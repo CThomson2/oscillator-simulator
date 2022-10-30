@@ -6,8 +6,6 @@ from scipy.integrate import solve_ivp
 import webbrowser
 import os
 
-# import modules
-from initial_conditions import get_init
 
 # Boundary Conditions
 # since x_0(t) = x_L(t) = 0, velocity at the boundaries is also a constant zero
@@ -15,19 +13,6 @@ x0 = 0
 xL = 0
 v0 = 0
 vL = 0
-
-
-
-# destruct = lambda dict, *args: (float(dict[arg]) for arg in args)
-# self.L, self.tf, self.N, self.k, self.rho, self.alpha, self.pert_ini = destruct(
-#     self.data, 'L', 'tf', 'N', 'k', 'rho', 'alpha', 'pert_ini')
-# self.init_type = self.data['init_type']
-# self.tf = int(self.tf)
-# self.N = int(self.N)
-# print('L', 'tf', 'N', 'k', 'rho', 'alpha', 'pert_ini', 'init_type')
-# print(self.L, self.tf, self.N, self.k, self.rho, self.alpha, self.pert_ini, self.init_type)
-
-
 
 class String():
 
@@ -61,7 +46,7 @@ class String():
         # choose a timestep (also in ms)
 
         # IMPORTANT - dt shouldn't be hardset to 1. Sometimes that will be too large.
-        self.tf_norm = 1000
+        self.tf_norm = self.tf
         self.dt = 1
         # But, if it's less than 1, the t array will contain decimals (e.g. t = [0, 0.2, 0.4, ... , 99.8, 100])
         # Clearly, you'll need to normalise the times so that the time step is equal to 1, which will increase
@@ -88,7 +73,8 @@ class String():
         if i in [0, self.N - 1]:
             return 0
         # otherwise use i parameter to determine the acceleration of the i-th oscillator
-        return self.k / self.m * (self.x[t][i + 1] + self.x[t][i - 1] - 2 * self.x[t][i]) * (1 + self.alpha * (self.x[t][i + 1] - self.x[t][i - 1]))
+        result = self.k / self.m * (self.x[t][i + 1] + self.x[t][i - 1] - 2 * self.x[t][i]) * (1 + self.alpha * (self.x[t][i + 1] - self.x[t][i - 1]))
+        return result
 
     # -----
     # Aim: to find the velocity of each oscillator at each point in time
@@ -133,15 +119,15 @@ class String():
 
     # Create method to store initial conditions in first time-step of arrays
     def setup(self):
-        init_disp = get_init(L, N, pert_ini, init_type, self.h, self.pos_lattice)
+        init_disp = self.get_init()
 
         plt.plot([i * self.h for i in range(N)], init_disp, 'r.-')
         plt.savefig('./static/img/graph.png')
 
         # -----
         # show user the initial conditions in graphical form
-        filename = 'file:///' + os.getcwd() + '/' + 'initcond.html'
-        webbrowser.open_new_tab(filename)
+        # filename = 'file:///' + os.getcwd() + '/' + 'initcond.html'
+        # webbrowser.open_new_tab(filename)
         # -----
 
         # Set the oscillators' displacement at time t=0 to initial conditions
@@ -157,16 +143,15 @@ class String():
         for i in range(1, self.N - 1):
             self.a[0][i] = self.get_acc(0, i)
 
-        plt.figure(figsize=(6, 3))
-        plt.subplot(131)
-        plt.plot(self.pos_lattice, self.x[0], 'b.-')
-        plt.xlabel('string')
-        plt.ylabel('displacement')
-        plt.subplot(132)
-        plt.plot(self.pos_lattice, self.a[0], 'r.-')
-        plt.xlabel('string')
-        plt.ylabel('acceleration')
-
+        # plt.figure(figsize=(6, 3))
+        # plt.subplot(131)
+        # plt.plot(self.pos_lattice, self.x[0], 'b.-')
+        # plt.xlabel('string')
+        # plt.ylabel('displacement')
+        # plt.subplot(132)
+        # plt.plot(self.pos_lattice, self.a[0], 'r.-')
+        # plt.xlabel('string')
+        # plt.ylabel('acceleration')
         # plt.show()
 
     # print('Mass:', m, 'Step size h:', h, 'Length density rho:', rho)
@@ -233,32 +218,34 @@ class String():
 
         plt.plot(self.pos_lattice, self.x[0], 'b-')
         plt.plot(self.pos_lattice, self.x[50], 'r--')
-        plt.plot(self.pos_lattice, self.x[120], 'b.-')
-        # plt.plot(pos_lattice, x[1180], 'g-')
-        # plt.plot(pos_lattice, x[2000], 'g--')
-        # plt.plot(pos_lattice, x[2500], 'g.-')
-        # plt.plot(pos_lattice, x[3000], 'r-')
-        # plt.plot(pos_lattice, x[3500], 'r--')
-        # plt.plot(pos_lattice, x[7000], 'r.-')
+        # plt.plot(self.pos_lattice, self.x[120], 'b.-')
+        # plt.plot(self.pos_lattice, self.x[180], 'b.-')
+        # plt.plot(self.pos_lattice, self.x[500], 'y.-')
+        # plt.plot(self.pos_lattice, self.x[750], 'g-')
+        # plt.plot(self.pos_lattice, self.x[2000], 'g--')
+        # plt.plot(self.pos_lattice, self.x[2500], 'g.-')
+        # plt.plot(self.pos_lattice, self.x[3000], 'r-')
+        # plt.plot(self.pos_lattice, self.x[3500], 'r--')
+        # plt.plot(self.pos_lattice, self.x[7000], 'r.-')
 
         # osc5 = [x[i][5] for i in range(len(t))]
         # plt.plot(t, osc5, 'r-')
 
         plt.show()
 
-        # print()
-        # print(x[:5])
-        # print()
-        # print(v[:5])
+        print()
+        print(self.x[:2])
+        print()
+        print(self.v[:2])
 
 
 # Hardcoded parameters for testing and debugging
 L = 1
-t_final = 500
+t_final = 2000
 N = 60
 k = 0.1
 rho = 400
-alpha = 0.1
+alpha = 0.4
 pert_ini = 1.0
 init_type = 'sine'
 
@@ -268,3 +255,5 @@ data = {'L': L, 'tf': t_final, 'N': N, 'k': k, 'rho': rho,
 mystr = String(data)
 mystr.get_init()
 mystr.setup()
+mystr.iterate()
+mystr.plot()
