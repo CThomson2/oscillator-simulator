@@ -16,12 +16,6 @@ vL = 0
 
 class String():
 
-    # Create a method that breaks the dictionary of user input down into its constituent parameters
-    # Will be used to extract relevant parameters for each method
-    @classmethod
-    def destruct_dict(cls, dict, *args):
-        return (float(dict[arg]) for arg in args)
-
     # ----- Parameter Definitions -----
     # x_i: displacement from equilibrium of i-th oscillator
     # u_i: velocity of i-th oscillator (eqbm vel. is zero)
@@ -66,6 +60,11 @@ class String():
             self.v.append(np.zeros(self.N))
             self.a.append(np.zeros(self.N))
 
+    # Create a class method that breaks the dictionary of user input down into its constituent parameters
+    # Will be used to extract relevant parameters for each method
+    @classmethod
+    def destruct_dict(cls, dict, *args):
+        return (float(dict[arg]) for arg in args)
 
     # define governing acceleration equation
     def get_acc(self, t, i):
@@ -164,16 +163,17 @@ class String():
     # -----
     def iterate(self):
     # -----
-    # To find displacement at any given point, we need its derivative: velocity.
-    # To find velocity, we need the acceleration at that point.
-    # Thus, we need to fill the velocity and displacement arrays iteratively.
-    # i.e. we find velocity at point i at time-step j using the formula for acceleration at point i at time-step j-1
-    # We do this for all oscillators i in-between the boundary conditions, which remain at zero displacement throughout
-    # Next, we find displacement at point i at time-step j using the indexed value for velocity that we just found and
-    #   stored in the appropriate location in the global velocity array.
-    # Before this algorithm, we can fill some rows in the 2D grids (arrays) for v and x
-    # We have already inserted the initial conditions, but we also know the displacement at time 0 + ∂t (i.e. first time step)
-    # Since v_0(t) = 0, the displacement cannot change in the second time-step. Therefore x_i(t1) = x_i(t0)
+
+        """To find displacement at any given point, we need its derivative: velocity.
+        To find velocity, we need the acceleration at that point.
+        Thus, we need to fill the velocity and displacement arrays iteratively.
+        i.e. we find velocity at point i at time-step j using the formula for acceleration at point i at time-step j-1
+        We do this for all oscillators i in-between the boundary conditions, which remain at zero displacement throughout
+        Next, we find displacement at point i at time-step j using the indexed value for velocity that we just found and
+        stored in the appropriate location in the global velocity array.
+        Before this algorithm, we can fill some rows in the 2D grids (arrays) for v and x
+        We have already inserted the initial conditions, but we also know the displacement at time 0 + ∂t (i.e. first time step)
+        Since v_0(t) = 0, the displacement cannot change in the second time-step. Therefore x_i(t1) = x_i(t0)"""
 
     # print(f'\n{t}\n')
 
