@@ -6,6 +6,10 @@ from scipy.integrate import solve_ivp
 import webbrowser
 import os
 
+# import modules
+from methods import Methods as mt
+
+print(mt.euler_simple())
 
 # Boundary Conditions
 # since x_0(t) = x_L(t) = 0, velocity at the boundaries is also a constant zero
