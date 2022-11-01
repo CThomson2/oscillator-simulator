@@ -34,6 +34,7 @@ class String():
         
         self.L, self.tf, self.N, self.k, self.rho, self.alpha, self.pert_ini = self.destruct_dict(self.data, 'L', 'tf', 'N', 'k', 'rho', 'alpha', 'pert_ini')
         self.N = int(self.N)
+        self.tf = int(self.tf)
 
         # calculate stepsize (distance between oscillators) and mass of each oscillator
         self.h = self.L / (self.N - 1)  # step size
@@ -44,16 +45,15 @@ class String():
         # choose a timestep (also in ms)
 
         # IMPORTANT - dt shouldn't be hardset to 1. Sometimes that will be too large.
-        self.tf_norm = self.tf
         self.dt = 1
         # But, if it's less than 1, the t array will contain decimals (e.g. t = [0, 0.2, 0.4, ... , 99.8, 100])
         # Clearly, you'll need to normalise the times so that the time step is equal to 1, which will increase
         # the final time. This means that when you plot the time, you need to use the original timescale provided
         # by the user.
 
-        self.n_step = math.ceil(self.tf_norm / self.dt)
+        self.n_step = math.ceil(self.tf / self.dt)
         # create time-step array
-        self.t = np.linspace(0, self.tf_norm - 1, self.n_step, dtype=int)
+        self.t = np.linspace(0, self.tf - 1, self.n_step, dtype=int)
         # create arrays that will hold all displacements, velocities and accelerations in the 2D space of discretised time and distance along string
         self.x = []
         self.v = []
@@ -70,15 +70,6 @@ class String():
     def destruct_dict(cls, dict, *args):
         return (float(dict[arg]) for arg in args)
 
-    # define governing acceleration equation
-    def get_acc(self, t, i):
-        # check for boundary conditions
-        if i in [0, self.N - 1]:
-            return 0
-        # otherwise use i parameter to determine the acceleration of the i-th oscillator
-        result = self.k / self.m * (self.x[t][i + 1] + self.x[t][i - 1] - 2 * self.x[t][i]) * (1 + self.alpha * (self.x[t][i + 1] - self.x[t][i - 1]))
-        return result
-
     # -----
     # Aim: to find the velocity of each oscillator at each point in time
     # Method: create a 2D array to store arrays of velocities at each time-step for each oscillator
@@ -90,33 +81,33 @@ class String():
     def get_init(self):
         init_type = self.data['init_type']
 
-        v_init = np.zeros(N)
+        x_init = np.zeros(N)
         # --- Case 1 ---
         if init_type == 'sine':
             for i in range(N):
 
-                v_init[i] = self.pert_ini * math.sin((2 * math.pi / L) * self.pos_lattice[i])
+                x_init[i] = self.pert_ini * math.sin((2 * math.pi / L) * self.pos_lattice[i])
                 # handle the potential error of boundary values being <just off> zero when they should be zero exactly
-                if abs(v_init[i]) < 1e-10:
-                    v_init[i] = 0
-            return v_init
+                if abs(x_init[i]) < 1e-10:
+                    x_init[i] = 0
+            return x_init
         # --- Case 2 ---
         elif init_type == 'half-sine':
             for i in range(N):
 
-                v_init[i] = self.pert_ini * math.sin((math.pi / L) * self.pos_lattice[i])
-                if abs(v_init[i]) < 1e-10:
-                    v_init[i] = 0
-            return v_init
+                x_init[i] = self.pert_ini * math.sin((math.pi / L) * self.pos_lattice[i])
+                if abs(x_init[i]) < 1e-10:
+                    x_init[i] = 0
+            return x_init
         # --- Case 3 ---
         elif init_type == 'parabola':
             for i in range(N):
 
-                v_init[i] = -(4 * self.pert_ini / L ** 2) * \
+                x_init[i] = -(4 * self.pert_ini / L ** 2) * \
                     (i * self.h - L / 2) ** 2 + self.pert_ini
-                if abs(v_init[i]) < 1e-10:
-                    v_init[i] = 0
-            return v_init
+                if abs(x_init[i]) < 1e-10:
+                    x_init[i] = 0
+            return x_init
         # Add more polynomial possibilites here (cubic, quartic etc.)
     
 
@@ -126,6 +117,7 @@ class String():
 
         plt.plot([i * self.h for i in range(N)], init_disp, 'r.-')
         plt.savefig('./static/img/graph.png')
+        plt.cla()
 
         # -----
         # show user the initial conditions in graphical form
@@ -144,7 +136,7 @@ class String():
         self.a[0][0] = 0
         self.a[0][self.N - 1] = 0
         for i in range(1, self.N - 1):
-            self.a[0][i] = self.get_acc(0, i)
+            self.a[0][i] = self.get_acc([self.x[0][i - 1], self.x[0][i], self.x[0][i + 1]])
 
         # plt.figure(figsize=(6, 3))
         # plt.subplot(131)
@@ -161,9 +153,48 @@ class String():
     # print(
     #     f'Init. Disp: {x[0]}, \n\nInit. Vel: {v[0]}, \n\nInit. Acc: {a[0]}\n')
 
+    # ----
+    # STEP 2: Define governing equations and derivative functions
+    # ----
 
+    # define governing acceleration equation
+    def get_acc(self, osc):
+
+        # check for boundary conditions
+        # for ox in osc:
+        #     if ox in [0, self.N - 1]:
+        #         return 0
+        # otherwise use i parameter to determine the acceleration of the i-th oscillator
+
+        result = (self.k / self.h) / self.m * (osc[2] + osc[0] - 2 * osc[1]) * (1 + self.alpha * (osc[2] - osc[0]))
+        return result
+
+    def model(self, t, y):
+        # print(y[1:3], y[-4:-2])
+        x = y[:int(len(y) / 2)]
+        v = y[int(len(y) / 2):]
+        fx = v
+        fv = np.zeros(len(v))
+
+        for i in range(len(v)):
+            if i not in [0, len(v) - 1]:
+                fv[i] = self.get_acc(
+                    [x[i - 1], x[i], x[i + 1]]
+                )
+            elif i == 0:
+                fv[i] = self.get_acc(
+                    [x0, x[i], x[i + 1]]
+                )
+            elif i == len(v) - 1:
+                fv[i] = self.get_acc(
+                    [x[i - 1], x[i], xL]
+                )
+        # print(fv)
+        return np.concatenate([fx, fv])
+
+    
     # -----
-    # STEP 2: Taking slices of time, we study the velocities and displacements of each oscillator using provided recurrence relations
+    # STEP 3: Taking slices of time, we study the velocities and displacements of each oscillator using provided recurrence relations
     # -----
     def iterate(self):
     # -----
@@ -183,13 +214,93 @@ class String():
 
     # throughout this program, i is associated with position along string and j with time-step
     # pattern is continued here for clarity and consistency
-    # iterating through time-steps
-        for j in range(0, self.n_step - 1):
+        
+        # Initial conditions
+        t0 = 0
+        y0 = np.concatenate([self.x[0][1:-1], self.v[0][1:-1]])
+
+        print(len(y0))
+        # print(y0)
+
+        t_eval = np.linspace(0, self.tf, num=1500)
+        res = solve_ivp(self.model, [t0, self.tf], y0, t_eval=t_eval)
+        # print(res.y[4])
+        # print(len(res.y[4]))
+        print('\n length of res.y:', len(res.y))
+        timesteps = []
+        for i in range(0, len(res.y[0])):
+            # store each instant in time in timesteps array
+            timesteps.append([j[i] for j in res.y[int(len(res.y) / 2):]])
+
+        for i in range(50):
+            plt.plot( self.pos_lattice, np.concatenate([[x0], timesteps[i], [xL]]) )
+        plt.title(f't_eval parameter = {t_eval[-1]}')
+        plt.show()
+        
+        # for j in range(0, self.tf, 10):
+        #     plt.plot(self.pos_lattice, np.concatenate([[x0], timesteps[j], [xL]]))
+        #     plt.show()
+
+    def iterate_old():
+        # iterating through time-steps
+        # for j in range(0, self.n_step - 1):
             # iterating through oscillators on string
-            for i in range(1, N - 1):
-                v_slope = self.get_acc(self.t[j], i)
-                self.v[j + 1][i] = self.v[j][i] + v_slope * self.dt
-                self.x[j + 1][i] = self.x[j][i] + self.v[j][i] * self.dt
+    
+            # Euler's Method
+            # for i in range(1, N - 1):
+            #     v_slope = self.get_acc([self.x[j][i - 1], self.x[j][i], self.x[j][i + 1]])
+            #     self.v[j + 1][i] = self.v[j][i] + v_slope * self.dt
+            #     self.x[j + 1][i] = self.x[j][i] + self.v[j][i] * self.dt
+
+            # SimEqns Method
+            # f = model
+            
+
+            # # Runge Kutta Method
+            # for i in range(1, N - 1):
+            #     # compute slope using the ODE
+            #     t_d = self.t[j]
+            #     v_d = self.v[j][i]
+            #     k1 = self.get_acc(j, i)
+
+            #     t_d = self.t[j] + self.dt / 2
+            #     v_d = self.v[j][i] + k1 * self.h / 2
+            #     k2 = self.get_acc(j, i)
+
+            #     t_d = self.t[j]
+            #     v_d = self.v[j][i]
+            #     k1 = self.get_acc(j, i)
+
+            #     t_d = self.t[j]
+            #     v_d = self.v[j][i]
+            #     k1 = self.get_acc(j, i)
+                
+
+            #     x_dummy = x_rk[i] + h / 2
+            #     y_dummy = y_rk[i] + k1 * h / 2
+            #     k2 = model(y_dummy, x_dummy)
+
+            #     x_dummy = x_rk[i] + h / 2
+            #     y_dummy = y_rk[i] + k2 * h / 2
+            #     k3 = model(y_dummy, x_dummy)
+
+            #     x_dummy = x_rk[i] + h
+            #     y_dummy = y_rk[i] + k3 * h
+            #     k4 = model(y_dummy, x_dummy)
+
+            #     # compute slope as weighted average of four slopes
+            #     slope = 1 / 6 * k1 + 2 / 6 * k2 + 2 / 6 * k3 + 1 / 6 * k4
+
+            #     # use the RK method
+            #     y_rk[i + 1] = y_rk[i] + h * slope
+
+            # Fv = lambda v_next, i: self.v[j][i] + self.get_acc(self.t[j + 1], i) * self.dt - v_next
+            # # print('\n'+str(j)+'\n')
+            # for i in range(1, N - 1):
+            #     self.v[j + 1][i] = mt.muller(Fv, self.v[j][i], 1.01 * self.v[j][i] + 10 ** -3, 0.98 * self.v[j][i], i, 100)
+            #     self.x[j + 1][i] = self.x[j][i] + self.v[j][i] * self.dt
+        pass
+
 
     # Plot results
     def plot(self):
@@ -219,37 +330,23 @@ class String():
         # plt.plot(pos_lattice, x[3])
         # plt.subplot(1, 3, (2, 2))
         # plt.plot(pos_lattice, x[4])
+        pass
 
-        plt.plot(self.pos_lattice, self.x[0], 'b-')
-        plt.plot(self.pos_lattice, self.x[50], 'r--')
-        # plt.plot(self.pos_lattice, self.x[120], 'b.-')
-        # plt.plot(self.pos_lattice, self.x[180], 'b.-')
-        # plt.plot(self.pos_lattice, self.x[500], 'y.-')
-        # plt.plot(self.pos_lattice, self.x[750], 'g-')
-        # plt.plot(self.pos_lattice, self.x[2000], 'g--')
-        # plt.plot(self.pos_lattice, self.x[2500], 'g.-')
-        # plt.plot(self.pos_lattice, self.x[3000], 'r-')
-        # plt.plot(self.pos_lattice, self.x[3500], 'r--')
-        # plt.plot(self.pos_lattice, self.x[7000], 'r.-')
-
-        # osc5 = [x[i][5] for i in range(len(t))]
-        # plt.plot(t, osc5, 'r-')
-
-        plt.show()
-
-        print()
-        print(self.x[:2])
-        print()
-        print(self.v[:2])
+    def run(self):
+        self.get_init()
+        self.setup()
+        self.iterate()
+        
+        # self.plot()
 
 
 # Hardcoded parameters for testing and debugging
 L = 1
-t_final = 2000
-N = 60
+t_final = 1000
+N = 100
 k = 0.1
 rho = 400
-alpha = 0.4
+alpha = 0
 pert_ini = 1.0
 init_type = 'sine'
 
@@ -257,7 +354,4 @@ data = {'L': L, 'tf': t_final, 'N': N, 'k': k, 'rho': rho,
          'alpha': alpha, 'pert_ini': pert_ini, 'init_type': init_type}
 
 mystr = String(data)
-mystr.get_init()
-mystr.setup()
-mystr.iterate()
-mystr.plot()
+mystr.run()
