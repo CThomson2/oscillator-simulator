@@ -222,19 +222,22 @@ class String():
         print(len(y0))
         # print(y0)
 
-        t_eval = np.linspace(0, self.tf, num=1500)
+        # solve simt. equations using solve_ivp
+        t_eval = np.linspace(0, self.tf, num=3000)
         res = solve_ivp(self.model, [t0, self.tf], y0, t_eval=t_eval)
-        # print(res.y[4])
-        # print(len(res.y[4]))
-        print('\n length of res.y:', len(res.y))
+
+        # print('\n length of res.y:', len(res.y))
+
+        # create list of slices in time wherein we store all displacements at that instant
         timesteps = []
         for i in range(0, len(res.y[0])):
             # store each instant in time in timesteps array
-            timesteps.append([j[i] for j in res.y[int(len(res.y) / 2):]])
+            timesteps.append([j[i] for j in res.y[int(len(res.y) / 2):]]) # dividing by 2 to discard velocities
 
+        # plot displacement for first 50 timesteps
         for i in range(50):
             plt.plot( self.pos_lattice, np.concatenate([[x0], timesteps[i], [xL]]) )
-        plt.title(f't_eval parameter = {t_eval[-1]}')
+        plt.title(f't_eval parameter = {len(t_eval)}, alpha = {self.alpha}')
         plt.show()
         
         # for j in range(0, self.tf, 10):
@@ -342,11 +345,11 @@ class String():
 
 # Hardcoded parameters for testing and debugging
 L = 1
-t_final = 1000
+t_final = 10000
 N = 100
 k = 0.1
 rho = 400
-alpha = 0
+alpha = 0.5
 pert_ini = 1.0
 init_type = 'sine'
 
