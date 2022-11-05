@@ -1,10 +1,13 @@
 import math
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 import numpy as np
-from scipy.integrate import solve_ivp, solve_bvp
+from scipy.integrate import solve_ivp
+from random import randint
 
-n_step = 1000
+tf = 1000
 dt = 0.01
+n_step = int(tf/dt)
 
 N = 50
 L = 1
@@ -78,17 +81,8 @@ def model(t, y):
 
 y0 = np.concatenate([x[0], u[0]])
 
-plt.figure()
-# plt.plot(positions, x[0])
-
-# for i in range(1, n_step):
-#     y0 = model(i, y0)
-#     x[i] = x[i - 1] + y0[0] * dt
-#     u[i] = u[i - 1] + y0[1] * dt
-#     plt.plot(positions, x[i])
-
-res = solve_ivp(model, [0, n_step], y0)
-
+t_eval = np.linspace(0, tf, num=n_step)
+res = solve_ivp(model, [0, tf], y0)
 
 slices = []
 for i in range(len(res.y[0])):
@@ -96,28 +90,65 @@ for i in range(len(res.y[0])):
     for j in range(N):
         slices[i][j] = res.y[j][i]
 
-print(len(slices))
+fig, ax = plt.subplots()
 
-for i in range(len(slices)):
-    if i % 5 == 0:
-        plt.plot(positions, slices[i])
+def rgb_to_hsl (r, g, b):
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    l = max(r, g, b);
+    s = l - min(r, g, b);
+
+    if s:
+        if l == r:
+            h = (g - b) / s
+        elif l == g:
+            h = 2 + (b - r) / s
+        else:
+            h = 4 + (r - g) / s
+    else:
+        h = 0
+        
+    if 60 * h < 0:
+        h = 60 * h + 360
+    else:
+        h = h * 60
+    if s:
+        if l <= 0.5:
+            s = 100 * (s / (2 * l - s))
+        else:
+            s = 100 * (s / (2 - (2 * l - s)))
+    else:
+        s = 0
+    l = (100 * (2 * l - s)) / 2
+    
+    return [h, s, l]
+        
+def change_col(rgb):
+    p = randint(0,2)
+    rgb = list(rgb)
+    rgb[p] += 0.02
+    if max(rgb) >= 1:
+        rgb[rgb.index(max(rgb))] -= 1
+    return tuple(rgb)
+    
+
+def animate(i):
+    ax.clear()
+    # r = (i / 100) % 1
+    # g = ((100 - i) / 100) % 1
+    r = abs(np.cos(0.5 * (i / 100 * 2 * np.pi + np.pi)))
+    g = abs(np.sin(0.5 * (i / 100 * 2 * np.pi) + 0.2 * np.pi))
+    b = abs(np.sin(0.5 * (i / 100 * 2 * np.pi - 0.75 * np.pi)))
+    ax.plot(positions, slices[i], color=(r, g, b))
+
+    ax.set_xlim([0,L])
+    ax.set_ylim([-init_amp, init_amp])
+
+
+ani = FuncAnimation(fig, animate, frames = n_step, interval = 25, repeat=False)
+
 
 plt.xlabel("Position along lattice")
 plt.ylabel("Oscillator displacement")
 plt.show()
-
-# res = model(0, y0)
-# for i in range(N):
-#     x[1][i] = x[0][i] + res[0][i] * 2
-#     u[1][i] = 0 + res[1][i] * 10
-
-# res2 = model(0, [x[1], u[1]])
-# for i in range(N):
-#     x[2][i] = x[1][i] + res2[0][i] * 2
-#     u[2][i] = u[1][i] + res2[1][i] * 2
-
-# res3 = model(0, [x[2], u[2]])
-# for i in range(N):
-#     x[3][i] = x[2][i] + res3[0][i] * 2
-#     u[3][i] = u[2][i] + res3[1][i] * 2
-
