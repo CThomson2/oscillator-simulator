@@ -18,7 +18,7 @@ def get_result():
         data = result.to_dict()
         for param in data:
             print(param, data[param])
-        main.simulate(data)
+        main.Fermi(data)
 
         # change the second parameter below to the data we analyse in main.py.
         # after the main computation we will display the useful output data on result.html using templating
