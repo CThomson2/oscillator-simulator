@@ -71,7 +71,7 @@ def Fermi(data):
 
     # use scipy's solve_ivp method to solve the Fermi-Pasta problem using Runge-Kutta (4th order)
     t_eval = np.linspace(0, tf, num=n_step)
-    res = solve_ivp(model, [0, tf], y0, t_eval=t_eval)
+    res = solve_ivp(model, [0, tf], y0)
 
     # solve_ivp returns an multidimensional array of arrays, each nested array holding all
     #   displacements for a specific oscillator
@@ -83,18 +83,19 @@ def Fermi(data):
         slices.append(np.zeros(N))
         for j in range(N):
             slices[i][j] = res.y[j][i]
-    
+
+
     # FOURIER ANALYSIS
 
-    fourier = []
-    for s in slices:
-        fourier.append(np.fft.rfft(s))
+    # fourier = []
+    # for s in slices:
+    #     fourier.append(np.fft.rfft(s))
 
-    frequencies = []
-    for j in range(len(fourier[1])):
-        frequencies.append(np.zeros(len(res.y[0])))
-        for i in range(len(res.y[0])):
-            frequencies[j][i] = fourier[i][j]
+    # frequencies = []
+    # for j in range(len(fourier[1])):
+    #     frequencies.append(np.zeros(len(res.y[0])))
+    #     for i in range(len(res.y[0])):
+    #         frequencies[j][i] = fourier[i][j]
 
     # the final stage is plotting the results
     # using MatPlotLib's animation class, the solution is plotted on a live graph
@@ -128,16 +129,9 @@ def Fermi(data):
     plt.show()
 
 
-tf = 250
+f = open("userdata.txt", "r")
+data = f.readlines()
+for i in range(len(data)):
+    data[i] = data[i].strip()
 
-N = 100
-L = 1
-
-k = 0.4
-rho = 200
-alpha = 0.25
-
-amp_0 = 1
-shape_0 = 'sine'
-
-Fermi({'L': L, 'tf': tf, 'N': N, 'k': k, 'rho': rho, 'alpha': alpha, 'amp_0': amp_0, 'shape_0': shape_0})
+Fermi({'L': data[0], 'tf': data[1], 'N': data[2], 'k': data[3], 'rho': data[4], 'alpha': data[5], 'amp_0': data[6], 'shape_0': data[7]})

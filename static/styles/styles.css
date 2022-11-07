@@ -19,6 +19,10 @@ h2 > em {
     font-weight: lighter;
 }
 
+blockquote {
+    margin-bottom: 30px;
+}
+
 figcaption {
     text-align: center;
     font-size: larger;
