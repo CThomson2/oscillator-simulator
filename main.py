@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
 from scipy.integrate import solve_ivp
+from scipy.fft import fft
 from random import randint
 from initial_conditions import get_init
 
@@ -29,7 +30,7 @@ def Fermi(data):
     # will be used as the x-axis for plotting variables of interest along length of string
     positions = [i * h for i in range(N)]
 
-    # create arrays that will hold all displacements and velocitiesin the
+    # create arrays that will hold all displacements and velocities in the
     #   2D space of discretised time and position on the string
     x = []
     u = []
@@ -74,7 +75,7 @@ def Fermi(data):
 
     # solve_ivp returns an multidimensional array of arrays, each nested array holding all
     #   displacements for a specific oscillator
-    # to graph the string through time, the provided array must be "flipped" so that it will
+    # to graph the string through time, the provided array must be transposed so that it will
     #   hold nested arrays of time-dependent strings (where each string represenets the displacements
     #   of its oscillators).
     slices = []
@@ -82,49 +83,86 @@ def Fermi(data):
         slices.append(np.zeros(N))
         for j in range(N):
             slices[i][j] = res.y[j][i]
+    
+    # FOURIER ANALYSIS
+
+    fourier = []
+    for s in slices:
+        fourier.append(np.fft.rfft(s))
+
+    frequencies = []
+    for j in range(len(fourier[1])):
+        frequencies.append(np.zeros(len(res.y[0])))
+        for i in range(len(res.y[0])):
+            frequencies[j][i] = fourier[i][j]
 
     # the final stage is plotting the results
     # using MatPlotLib's animation class, the solution is plotted on a live graph
-    fig, ax = plt.subplots()
+
+    # fig, ax = plt.subplots()
+    # fig2, ax2 = plt.subplots()
 
     print(len(slices))
-           
-    def animate(i):
-        # reset the graph at each step
-        ax.clear()
-        
-        # the following lines change the graph colour over time
-        # each RGB channel follows a different sinusoid, with the peaks of all
-        #   three seperated to provide periodic chromatic shifting
-        # the amplitude is in order to prevent unaesthethic light colours
-        r = abs(0.75*np.cos(0.5 * (i / 100 * 2 * np.pi + np.pi)))     
-        g = abs(0.75*np.sin(0.5 * (i / 100 * 2 * np.pi) + 0.2 * np.pi))
-        # b = abs(0.75*np.sin(0.5 * (i / 100 * 2 * np.pi - 0.75 * np.pi)))
-        b = 0.7
-        # plot oscillators' displacement at each time step
-        # use circles on string to represent the N oscillators
-        ax.plot(positions, slices[i], marker='o', markersize=3, color=(r, g, b))
+    
+    plt.plot(frequencies[1], color='blue')
+    plt.plot(frequencies[2], color='orange')
+    plt.plot(frequencies[3], color='green')
+    plt.plot(frequencies[4], color='red')
 
-        ax.set_xlim([0,L])
-        ax.set_ylim([-amp_0, amp_0])
-
-    ani = FuncAnimation(fig, animate, frames = n_step - 1, interval = 1, repeat=False)
-
-    # annotate graph and display it to user
-    plt.title("Oscillator displacement along lattice (string) over time")
-    plt.xlabel("Position along lattice")
-    plt.ylabel("Oscillator displacement")
+    plt.xlabel('Time')
+    plt.ylabel('Fourier Coefficient Amplitude')
+    plt.title(f'Alpha, a = {alpha}')
     plt.show()
 
+    ### TESTING AREA
+    # testx = np.linspace(0, 1, 100)
+    # testf = np.sin(2 * np.pi * testx)
+    # plt.plot(np.fft.rfft(testf))
+    # plt.plot(testx, testf)
+    # plt.show()
+    ###
 
-tf = 2500
+    # plt.plot(f1, marker='.', color='blue')
+    # plt.plot(f2, marker='.', color='orange')
+    # plt.plot(f3, marker='.', color='green')
+    # plt.plot(f4, marker='.', color='red')
+    # plt.show()
+           
+    # def animate(i):
+    #     # reset the graph at each step
+    #     ax.clear()
+        
+    #     # the following lines change the graph colour over time
+    #     # each RGB channel follows a different sinusoid, with the peaks of all
+    #     #   three seperated to provide periodic chromatic shifting
+    #     # the amplitude is in order to prevent unaesthethic light colours
+    #     r = abs(0.75*np.cos(0.5 * (i / 100 * 2 * np.pi + np.pi)))     
+    #     g = abs(0.75*np.sin(0.5 * (i / 100 * 2 * np.pi) + 0.2 * np.pi))
+    #     # b = abs(0.75*np.sin(0.5 * (i / 100 * 2 * np.pi - 0.75 * np.pi)))
+    #     b = 0.7
+    #     # plot oscillators' displacement at each time step
+    #     # use circles on string to represent the N oscillators
+    #     ax.plot(positions, slices[i], marker='o', markersize=3, color=(r, g, b))
+
+    #     ax.set_xlim([0,L])
+    #     ax.set_ylim([-amp_0, amp_0])
+
+    # ani = FuncAnimation(fig, animate, frames = n_step - 1, interval = 1, repeat=False)
+    # # annotate graph and display it to user
+    # plt.title("Oscillator displacement along lattice (string) over time")
+    # plt.xlabel("Position along lattice")
+    # plt.ylabel("Oscillator displacement")
+    # plt.show()
+
+
+tf = 250
 
 N = 100
 L = 1
 
 k = 0.4
 rho = 200
-alpha = 0.9
+alpha = 0.25
 
 amp_0 = 1
 shape_0 = 'sine'
