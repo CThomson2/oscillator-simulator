@@ -1,8 +1,16 @@
-# FermiPastaG12
+# Lattice (Oscillators on String) Simulator
 
-Simulation project for an engineering numerical methods class. The program will solve a dual system of ODEs and find displacements of oscillators in a 1D lattice with user-specified parameters, display an animation of the oscillators' displacements through time and finally perform a Fourier analysis.
+Numerically simulated program that emulates the famous experiment conducted in 1953 by Enrico Fermi, John Pasta, Stanislaw Ulam, and Mary Tsingou. The program will solve a dual system of ODEs and find displacements of oscillators in a 1D lattice with user-specified parameters, display an animation of the oscillators' displacements through time and finally perform a Fourier analysis.
 
 __## [Video Demonstration (Non-Linear Case)](https://vimeo.com/768030094)__
+
+# How to run the program
+
+- Download or clone repository
+- Run view.py
+- In the Chrome browser, navigate to http://127.0.0.1:8888/
+- Fill in the HTML form and submit
+- Wait for data to be processed, then watch the Matplotlib-generated animated result
 
 # Simulation Program Structure
 
