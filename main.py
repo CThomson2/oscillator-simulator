@@ -7,6 +7,7 @@ from scipy.integrate import solve_ivp
 from scipy.fft import fft
 from random import randint
 from initial_conditions import get_init
+import time
 
 def Fermi(data):
 
@@ -20,7 +21,7 @@ def Fermi(data):
     N = int(N)
     tf = int(tf)
 
-    dt = 0.01
+    dt = 1
     # calculate total time steps the variables of interest will be recorded at
     n_step = int(tf/dt)
     # calculate stepsize (distance between oscillators) and mass of each oscillator
@@ -71,7 +72,7 @@ def Fermi(data):
 
     # use scipy's solve_ivp method to solve the Fermi-Pasta problem using Runge-Kutta (4th order)
     t_eval = np.linspace(0, tf, num=n_step)
-    res = solve_ivp(model, [0, tf], y0)
+    res = solve_ivp(model, [0, tf], y0, t_eval=t_eval)
 
     # solve_ivp returns an multidimensional array of arrays, each nested array holding all
     #   displacements for a specific oscillator
@@ -87,20 +88,39 @@ def Fermi(data):
 
     # FOURIER ANALYSIS
 
-    # fourier = []
-    # for s in slices:
-    #     fourier.append(np.fft.rfft(s))
+    fourier = []
+    for i in range(0, len(slices)):
+        fourier.append(np.fft.rfft(slices[i]))
+    
+    frequencies = []
+    for j in range(len(fourier[1])):
+        frequencies.append(np.zeros(len(fourier)))
+        for i in range(len(fourier)):
+            frequencies[j][i] = fourier[i][j]
 
-    # frequencies = []
-    # for j in range(len(fourier[1])):
-    #     frequencies.append(np.zeros(len(res.y[0])))
-    #     for i in range(len(res.y[0])):
-    #         frequencies[j][i] = fourier[i][j]
+    # normalise fourier coefficients at any given time step
+    def normalize(vals):
+        total = sum(vals)
+        return [v / total for v in vals]
 
+    plt.figure(figsize=(10, 5))
+    plt.plot(frequencies[1], color='blue', label='First')
+    plt.plot(frequencies[2], color='orange', label='Second')
+    plt.plot(frequencies[3], color='green', label='Third')
+    plt.plot(frequencies[4], color='red', label='Fourth')
+    plt.legend()
+
+    plt.xlim([0, tf])
+    plt.xlabel("time, t [ms]")
+    plt.ylabel("Fourier Coefficients")
+    plt.title("Fourier series of lattice oscillations at discrete time steps")
+
+    plt.show()
     # the final stage is plotting the results
     # using MatPlotLib's animation class, the solution is plotted on a live graph
 
     fig, ax = plt.subplots()
+    fig.set_size_inches(12, 6)
 
     def animate(i):
         # reset the graph at each step
@@ -112,20 +132,22 @@ def Fermi(data):
         # the amplitude is in order to prevent unaesthethic light colours
         r = abs(0.75*np.cos(0.5 * (i / 100 * 2 * np.pi + np.pi)))     
         g = abs(0.75*np.sin(0.5 * (i / 100 * 2 * np.pi) + 0.2 * np.pi))
-        # b = abs(0.75*np.sin(0.5 * (i / 100 * 2 * np.pi - 0.75 * np.pi)))
         b = 0.7
         # plot oscillators' displacement at each time step
         # use circles on string to represent the N oscillators
-        ax.plot(positions, slices[i], marker='o', markersize=3, color=(r, g, b))
+        ax.plot(positions, slices[i], marker='o', markersize=3, color=(r, g, b), label=f'time t = {str(i) + "ms" if i < 1000 else str(round(i / 1000, 3)) + "s"}')
+        ax.legend(loc="upper right")
 
         ax.set_xlim([0,L])
         ax.set_ylim([-amp_0, amp_0])
 
-    ani = FuncAnimation(fig, animate, frames = n_step - 1, interval = 1, repeat=False)
+    ani = FuncAnimation(fig, animate, frames = n_step, interval = 1, repeat=False)
     # annotate graph and display it to user
-    plt.title("Oscillator displacement along lattice (string) over time")
-    plt.xlabel("Position along lattice")
-    plt.ylabel("Oscillator displacement")
+    
+    plt.title(f"Oscillation of lattice over time with non-linear coefficient alpha = {alpha}")
+    plt.xlabel("Position along string, p [m]")
+    plt.ylabel("Horizontal displacement, x [m]")
+
     plt.show()
 
 
