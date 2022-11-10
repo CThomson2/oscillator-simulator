@@ -70,7 +70,8 @@ __## [Video Demonstration (Non-Linear Case)](https://vimeo.com/768030094)__
 
 ---
 
-## Additional Features
+## Additional Features - Ideas
 
-- If user inputs a step size large enough to cause instability, kill the program and print error OR even prevent user from submitting the Parameters form if their h value is too high - we will need to work out k first to determine the region of stability
-- Create a range of preset polynomials that satisfy the boundary conditions for the user to choose from when setting initial conditions. Create a button that when clicked unhides a subsection of polynomial graphs that can be clicked.
+- If user inputs any parameters that may cause instability, kill the program and print error or prevent user from submitting the Parameters form in this case.
+
+- Create a range of preset polynomials that satisfy the boundary conditions for the user to choose from when setting initial conditions. Create a button that when clicked displays a subsection of polynomial graphs that can be selected and simulated.
