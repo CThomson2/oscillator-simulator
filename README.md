@@ -10,7 +10,7 @@ __## [Video Demonstration (Non-Linear Case)](https://vimeo.com/768030094)__
 - Run view.py
 - In the Chrome browser, navigate to http://127.0.0.1:8888/
 - Fill in the HTML form and submit
-- Wait for data to be processed, then watch the Matplotlib-generated animated result
+- Wait for data to be processed, then watch the Matplotlib-generated animated solution
 
 # Simulation Program Structure
 
