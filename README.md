@@ -8,7 +8,7 @@ __## [Video Demonstration (Non-Linear Case)](https://vimeo.com/768030094)__
 
 - Download or clone repository
 - Run view.py
-- In the Chrome browser, navigate to http://127.0.0.1:8888/
+- In the Chrome browser, navigate to http://127.0.0.1:3000/
 - Fill in the HTML form and submit
 - Wait for data to be processed, then watch the Matplotlib-generated animated solution
 

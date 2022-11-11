@@ -111,14 +111,13 @@ def Fermi(data):
     # using MatPlotLib's animation class, the solution is plotted on a live graph
 
     # set up MPL figure with two axes (f: fourier and s: solution)
+    
     fig, (ax_f, ax_s) = plt.subplots(2, 1)
     fig.set_size_inches(12, 10)
-
 
     def animate(i):
         # reset the graphs at each step
         ax_s.clear()
-        ax_f.clear()
         
         # --- x_i(t) Solution ---
 
@@ -136,33 +135,37 @@ def Fermi(data):
         ax_s.set_xlim([0,L])
         ax_s.set_ylim([-amp_0, amp_0])
 
-        # --- Fourier Coefficiens ---
+
+        # annotate figure
+        ax_s.set_title(f"Oscillation of lattice over time with non-linear coefficient alpha = {alpha}")
+        ax_s.set_xlabel("Position along string, p [m]")
+        ax_s.set_ylabel("Horizontal displacement, x [m]")
+
+        # --- Fourier Coefficients ---
+        ax_f.clear()
 
         ax_f.plot(coefs[1][:i], color='blue', label='First')
         ax_f.plot(coefs[2][:i], color='orange', label='Second')
         ax_f.plot(coefs[3][:i], color='green', label='Third')
         ax_f.plot(coefs[4][:i], color='red', label='Fourth')
+        ax_f.legend()
 
         ax_f.set_xlim([0, tf])
         ax_f.set_ylim([0, 1])
 
+        ax_f.set_title("Fourier series of lattice oscillations at discrete time steps")
+        ax_f.set_xlabel("time, t [ms]")
+        ax_f.set_ylabel("Fourier Coefficients")
+        # plot the coefficients of interest
+            
+
     ani = FuncAnimation(fig, animate, frames = n_step, interval = 1, repeat=False)
-    
-    # annotate figure and display it to user
-    ax_f.legend()
-    
-    ax_f.set_xlabel("time, t [ms]")
-    ax_f.set_ylabel("Fourier Coefficients")
-    ax_f.set_title("Fourier series of lattice oscillations at discrete time steps")
 
-    ax_s.set_title(f"Oscillation of lattice over time with non-linear coefficient alpha = {alpha}")
-    ax_s.set_xlabel("Position along string, p [m]")
-    ax_s.set_ylabel("Horizontal displacement, x [m]")
-
+    # display figure to user
     plt.show()
 
 
-f = open("userdata.txt", "r")
+f = open("demo_data.txt", "r")
 data = f.readlines()
 for i in range(len(data)):
     data[i] = data[i].strip()
