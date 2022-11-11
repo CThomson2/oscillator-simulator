@@ -92,70 +92,74 @@ def Fermi(data):
     # create array of fourier coefficients for the N oscillators at every time step
     fourier = []
     for i in range(0, len(slices)):
+        # since the coefficients represent the amplitude of each frequency,
+        #   the magnitude is all that we care about.
+        # normalise coefficients by dividing by half of N.
         fourier.append(np.absolute(np.fft.rfft(slices[i])) / (N / 2))
 
-    # normalise fourier coefficients at any given time step
-    def normalize(vals):
-        total = sum(vals)
-        return [v / total for v in vals]
-
-    # for i in range(len(fourier)):
-    #     fourier[i] = normalize(fourier[i])
-
-    frequencies = []
+    # we now have the Fourier series for every timestep, but we want to display the evolution
+    #   of the coefficients over time.
+    # invert the Fourier series by swapping i-th and j-th with their converse and appending
+    #   to a new coefficients array
+    coefs = []
     for j in range(len(fourier[1])):
-        frequencies.append(np.zeros(len(fourier)))
+        coefs.append(np.zeros(len(fourier)))
         for i in range(len(fourier)):
-            frequencies[j][i] = fourier[i][j]
-
-
-    plt.figure(figsize=(10, 5))
-    plt.plot(frequencies[1], color='blue', label='First')
-    plt.plot(frequencies[2], color='orange', label='Second')
-    plt.plot(frequencies[3], color='green', label='Third')
-    plt.plot(frequencies[4], color='red', label='Fourth')
-    plt.legend()
-
-    plt.xlim([0, tf])
-    plt.xlabel("time, t [ms]")
-    plt.ylabel("Fourier Coefficients")
-    plt.title("Fourier series of lattice oscillations at discrete time steps")
-
-    plt.show()
+            coefs[j][i] = fourier[i][j]
 
     # the final stage is plotting the results
     # using MatPlotLib's animation class, the solution is plotted on a live graph
 
-    # fig, ax = plt.subplots()
-    # fig.set_size_inches(12, 6)
+    # set up MPL figure with two axes (f: fourier and s: solution)
+    fig, (ax_f, ax_s) = plt.subplots(2, 1)
+    fig.set_size_inches(12, 10)
 
-    # def animate(i):
-    #     # reset the graph at each step
-    #     ax.clear()
+
+    def animate(i):
+        # reset the graphs at each step
+        ax_s.clear()
+        ax_f.clear()
         
-    #     # the following lines change the graph colour over time
-    #     # each RGB channel follows a different sinusoid, with the peaks of all
-    #     #   three seperated to provide periodic chromatic shifting
-    #     # the amplitude is in order to prevent unaesthethic light colours
-    #     r = abs(0.75*np.cos(0.5 * (i / 100 * 2 * np.pi + np.pi)))     
-    #     g = abs(0.75*np.sin(0.5 * (i / 100 * 2 * np.pi) + 0.2 * np.pi))
-    #     b = 0.7
-    #     # plot oscillators' displacement at each time step
-    #     # use circles on string to represent the N oscillators
-    #     ax.plot(positions, slices[i], marker='o', markersize=3, color=(r, g, b), label=f'time t = {str(i) + "ms" if i < 1000 else str(round(i / 1000, 3)) + "s"}')
-    #     ax.legend(loc="upper right")
+        # --- x_i(t) Solution ---
 
-    #     ax.set_xlim([0,L])
-    #     ax.set_ylim([-amp_0, amp_0])
+        # the following lines change the graph colour over time
+        # each RGB channel follows a different sinusoid, with the peaks of all
+        #   three seperated to provide periodic chromatic shifting
+        # the amplitude is in order to prevent unaesthethic light colours
+        r = abs(0.75*np.cos(0.5 * (i / 100 * 2 * np.pi + np.pi)))     
+        g = abs(0.75*np.sin(0.5 * (i / 100 * 2 * np.pi) + 0.2 * np.pi))
+        b = 0.7
+        # plot oscillators' displacement at each time step
+        # use circles on string to represent the N oscillators
+        ax_s.plot(positions, slices[i], marker='o', markersize=3, color=(r, g, b), label=f'time t = {str(i) + "ms" if i < 1000 else str(round(i / 1000, 3)) + "s"}')
+        ax_s.legend(loc="upper right")
+        ax_s.set_xlim([0,L])
+        ax_s.set_ylim([-amp_0, amp_0])
 
-    # ani = FuncAnimation(fig, animate, frames = n_step, interval = 1, repeat=False)
-    # annotate graph and display it to user
+        # --- Fourier Coefficiens ---
+
+        ax_f.plot(coefs[1][:i], color='blue', label='First')
+        ax_f.plot(coefs[2][:i], color='orange', label='Second')
+        ax_f.plot(coefs[3][:i], color='green', label='Third')
+        ax_f.plot(coefs[4][:i], color='red', label='Fourth')
+
+        ax_f.set_xlim([0, tf])
+        ax_f.set_ylim([0, 1])
+
+    ani = FuncAnimation(fig, animate, frames = n_step, interval = 1, repeat=False)
     
-    # plt.title(f"Oscillation of lattice over time with non-linear coefficient alpha = {alpha}")
-    # plt.xlabel("Position along string, p [m]")
-    # plt.ylabel("Horizontal displacement, x [m]")
+    # annotate figure and display it to user
+    ax_f.legend()
+    
+    ax_f.set_xlabel("time, t [ms]")
+    ax_f.set_ylabel("Fourier Coefficients")
+    ax_f.set_title("Fourier series of lattice oscillations at discrete time steps")
 
-    # plt.show()
+    ax_s.set_title(f"Oscillation of lattice over time with non-linear coefficient alpha = {alpha}")
+    ax_s.set_xlabel("Position along string, p [m]")
+    ax_s.set_ylabel("Horizontal displacement, x [m]")
+
+    plt.show()
 
 
 f = open("userdata.txt", "r")
