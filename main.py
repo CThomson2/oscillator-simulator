@@ -14,6 +14,7 @@ def Fermi(data):
     # create a function that breaks the dictionary of user inputs down into its constituent parameters
     destruct_dict = lambda dict, *args: (float(dict[arg]) for arg in args)
 
+    # extract all variables from the data dictionary
     L, tf, N, k, rho, alpha, amp_0 = destruct_dict(data, 'L', 'tf', 'N', 'k', 'rho', 'alpha', 'amp_0')
     shape_0 = data['shape_0']
 
@@ -88,20 +89,25 @@ def Fermi(data):
 
     # FOURIER ANALYSIS
 
+    # create array of fourier coefficients for the N oscillators at every time step
     fourier = []
     for i in range(0, len(slices)):
-        fourier.append(np.fft.rfft(slices[i]))
-    
+        fourier.append(np.absolute(np.fft.rfft(slices[i])) / (N / 2))
+
+    # normalise fourier coefficients at any given time step
+    def normalize(vals):
+        total = sum(vals)
+        return [v / total for v in vals]
+
+    # for i in range(len(fourier)):
+    #     fourier[i] = normalize(fourier[i])
+
     frequencies = []
     for j in range(len(fourier[1])):
         frequencies.append(np.zeros(len(fourier)))
         for i in range(len(fourier)):
             frequencies[j][i] = fourier[i][j]
 
-    # normalise fourier coefficients at any given time step
-    def normalize(vals):
-        total = sum(vals)
-        return [v / total for v in vals]
 
     plt.figure(figsize=(10, 5))
     plt.plot(frequencies[1], color='blue', label='First')
@@ -116,39 +122,40 @@ def Fermi(data):
     plt.title("Fourier series of lattice oscillations at discrete time steps")
 
     plt.show()
+
     # the final stage is plotting the results
     # using MatPlotLib's animation class, the solution is plotted on a live graph
 
-    fig, ax = plt.subplots()
-    fig.set_size_inches(12, 6)
+    # fig, ax = plt.subplots()
+    # fig.set_size_inches(12, 6)
 
-    def animate(i):
-        # reset the graph at each step
-        ax.clear()
+    # def animate(i):
+    #     # reset the graph at each step
+    #     ax.clear()
         
-        # the following lines change the graph colour over time
-        # each RGB channel follows a different sinusoid, with the peaks of all
-        #   three seperated to provide periodic chromatic shifting
-        # the amplitude is in order to prevent unaesthethic light colours
-        r = abs(0.75*np.cos(0.5 * (i / 100 * 2 * np.pi + np.pi)))     
-        g = abs(0.75*np.sin(0.5 * (i / 100 * 2 * np.pi) + 0.2 * np.pi))
-        b = 0.7
-        # plot oscillators' displacement at each time step
-        # use circles on string to represent the N oscillators
-        ax.plot(positions, slices[i], marker='o', markersize=3, color=(r, g, b), label=f'time t = {str(i) + "ms" if i < 1000 else str(round(i / 1000, 3)) + "s"}')
-        ax.legend(loc="upper right")
+    #     # the following lines change the graph colour over time
+    #     # each RGB channel follows a different sinusoid, with the peaks of all
+    #     #   three seperated to provide periodic chromatic shifting
+    #     # the amplitude is in order to prevent unaesthethic light colours
+    #     r = abs(0.75*np.cos(0.5 * (i / 100 * 2 * np.pi + np.pi)))     
+    #     g = abs(0.75*np.sin(0.5 * (i / 100 * 2 * np.pi) + 0.2 * np.pi))
+    #     b = 0.7
+    #     # plot oscillators' displacement at each time step
+    #     # use circles on string to represent the N oscillators
+    #     ax.plot(positions, slices[i], marker='o', markersize=3, color=(r, g, b), label=f'time t = {str(i) + "ms" if i < 1000 else str(round(i / 1000, 3)) + "s"}')
+    #     ax.legend(loc="upper right")
 
-        ax.set_xlim([0,L])
-        ax.set_ylim([-amp_0, amp_0])
+    #     ax.set_xlim([0,L])
+    #     ax.set_ylim([-amp_0, amp_0])
 
-    ani = FuncAnimation(fig, animate, frames = n_step, interval = 1, repeat=False)
+    # ani = FuncAnimation(fig, animate, frames = n_step, interval = 1, repeat=False)
     # annotate graph and display it to user
     
-    plt.title(f"Oscillation of lattice over time with non-linear coefficient alpha = {alpha}")
-    plt.xlabel("Position along string, p [m]")
-    plt.ylabel("Horizontal displacement, x [m]")
+    # plt.title(f"Oscillation of lattice over time with non-linear coefficient alpha = {alpha}")
+    # plt.xlabel("Position along string, p [m]")
+    # plt.ylabel("Horizontal displacement, x [m]")
 
-    plt.show()
+    # plt.show()
 
 
 f = open("userdata.txt", "r")
