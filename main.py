@@ -55,18 +55,34 @@ def Fermi(data):
     # this function returns the derivatives (slopes) of all input variables
     def model(t, y):
         # extract the displacements and velocities from y array
-        x = y[:int(len(y) / 2)]
-        u = y[int(len(y) / 2):]
 
-        # the derivative of displacement is simply the velocity
-        fx = u
-        fu = np.zeros(N)
+        if N % 2 == 0:
+            x = y[:int(len(y) / 4)]
+            u = y[int(len(y) / 2):int(len(y) * 3 / 4)]
 
-        # fill dv/dt array using acceleration function and provided displacement values
-        for i in range(1, N-1):
-            fu[i] = get_acc([ x[i - 1], x[i], x[i + 1] ])
+            # the derivative of displacement is simply the velocity
+            fx = u
+            fu = np.zeros(math.floor(N/2))
 
-        return np.concatenate([fx, fu])
+            # fill dv/dt array using acceleration function and provided displacement values
+            for i in range(1, len(fu) - 1):
+                fu[i] = get_acc([ x[i - 1], x[i], x[i + 1] ])
+            fu[-1] = get_acc([ x[-2], x[-1], -x[-1] ])
+
+            return np.concatenate([fx, [-f for f in fx], fu, [-f for f in fu]])
+        
+        else:
+            x = y[:int(len(y) / 4)]
+            u = y[int(len(y) / 2):int(len(y) * 3 / 4)]
+
+            fx = u
+            fu = np.zeros(math.floor(N/2))
+
+            # fill dv/dt array using acceleration function and provided displacement values
+            for i in range(1, len(fu) - 1):
+                fu[i] = get_acc([ x[i - 1], x[i], x[i + 1] ])
+
+            return np.concatenate([fx, [0], [-f for f in fx], fu, [0], [-f for f in fu]])
 
     # set the initial model input to the combined initial conditions
     y0 = np.concatenate([x[0], u[0]])
@@ -114,7 +130,7 @@ def Fermi(data):
     
     fig, (ax_f, ax_s) = plt.subplots(2, 1)
     fig.set_size_inches(12, 10)
-
+    
     def animate(i):
         # reset the graphs at each step
         ax_s.clear()
@@ -162,6 +178,7 @@ def Fermi(data):
     ani = FuncAnimation(fig, animate, frames = n_step, interval = 1, repeat=False)
 
     # display figure to user
+    fig.tight_layout(pad=5.0)
     plt.show()
 
 
