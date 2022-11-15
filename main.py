@@ -99,13 +99,26 @@ def Fermi(data):
 
                 return np.concatenate([fx, [0], [-f for f in reversed(fx)], fu, [0], [-f for f in reversed(fu)]])
         
-        
+        # unfortunately, this mathematical exploit is invalid for the non-linear half-sine or parabolic cases
+        x = y[:int(len(y) / 2)]
+        u = y[int(len(y) / 2):]
+
+        # the derivative of displacement is simply the velocity
+        fx = u
+        fu = np.zeros(N)
+
+        # fill dv/dt array using acceleration function and provided displacement values
+        for i in range(1, N-1):
+            fu[i] = get_acc([ x[i - 1], x[i], x[i + 1] ])
+
+        return np.concatenate([fx, fu])
 
 
     # set the initial model input to the combined initial conditions
     y0 = np.concatenate([x[0], u[0]])
 
     # use scipy's solve_ivp method to solve the Fermi-Pasta problem using Runge-Kutta (4th order)
+
     t_eval = np.linspace(0, tf, num=n_step)
     res = solve_ivp(model, [0, tf], y0, t_eval=t_eval)
 
