@@ -54,35 +54,53 @@ def Fermi(data):
     # define model function to be used in solve_ivp later
     # this function returns the derivatives (slopes) of all input variables
     def model(t, y):
-        # extract the displacements and velocities from y array
-
-        if N % 2 == 0:
-            x = y[:int(len(y) / 4)]
-            u = y[int(len(y) / 2):int(len(y) * 3 / 4)]
-
-            # the derivative of displacement is simply the velocity
-            fx = u
-            fu = np.zeros(math.floor(N/2))
-
-            # fill dv/dt array using acceleration function and provided displacement values
-            for i in range(1, len(fu) - 1):
-                fu[i] = get_acc([ x[i - 1], x[i], x[i + 1] ])
-            fu[-1] = get_acc([ x[-2], x[-1], -x[-1] ])
-
-            return np.concatenate([fx, [-f for f in fx], fu, [-f for f in fu]])
         
-        else:
-            x = y[:int(len(y) / 4)]
-            u = y[int(len(y) / 2):int(len(y) * 3 / 4)]
+        if shape_0 == 'sine':
+        # to minimise the computations required, we make use of the sine wave's symmetry - present
+        #   even in the non-linear case!
+        # instead of evaluating the slopes of all N oscillators, we only need to do so for the first
+        #   half, then invert the values for the second half of the wave
+        # there is a notable difference in the algorithm depending on N's parity (i.e. odd or even)
 
-            fx = u
-            fu = np.zeros(math.floor(N/2))
+            if N % 2 == 0:
+                # extract the displacements and velocities from y array
+                x = y[:int(len(y) / 4)]
+                u = y[int(len(y) / 2):int(len(y) * 3 / 4)]
 
-            # fill dv/dt array using acceleration function and provided displacement values
-            for i in range(1, len(fu) - 1):
-                fu[i] = get_acc([ x[i - 1], x[i], x[i + 1] ])
+                # the derivative of displacement is simply the velocity
+                fx = u
+                fu = np.zeros(math.floor(N/2))
 
-            return np.concatenate([fx, [0], [-f for f in fx], fu, [0], [-f for f in fu]])
+                # fill dv/dt array using acceleration function and provided displacement values
+                # begin range at index 1 because of the boundary condition
+                for i in range(1, len(fu) - 1):
+                    fu[i] = get_acc([ x[i - 1], x[i], x[i + 1] ])
+                # -x[-1] is simply the next oscillator in line, and lies on the other side of the x-axis
+                #   as x[-1]
+                fu[-1] = get_acc([ x[-2], x[-1], -x[-1] ])
+
+                # concatenate the derivaties to the the corresponding reversed negative derivatives (envision
+                #   the sine wave if this is unclear)
+                return np.concatenate([fx, [-f for f in reversed(fx)], fu, [-f for f in reversed(fu)]])
+            
+            # when N is odd, the central oscillator remains static throughout
+            # therefore, to find the acceleration value for the final velocity value
+            #   we must simply use zero as the displacement of the subsequent oscillator
+            else:
+                x = y[:int(len(y) / 4)]
+                u = y[int(len(y) / 2):int(len(y) * 3 / 4)]
+
+                fx = u
+                fu = np.zeros(math.floor(N/2))
+
+                for i in range(1, len(fu) - 1):
+                    fu[i] = get_acc([ x[i - 1], x[i], x[i + 1] ])
+                fu[-1] = get_acc([ x[-2], x[-1], 0 ])
+
+                return np.concatenate([fx, [0], [-f for f in reversed(fx)], fu, [0], [-f for f in reversed(fu)]])
+        
+        
+
 
     # set the initial model input to the combined initial conditions
     y0 = np.concatenate([x[0], u[0]])
