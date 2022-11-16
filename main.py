@@ -9,6 +9,22 @@ from random import randint
 from initial_conditions import get_init
 import time
 
+###
+
+# ----- Introduction -----
+
+### Program Capabilities and Limitations
+
+# will simulate 1D FPUT lattice for any numerical combination of initial conditions,
+#   however in its current version only allows for initial waveforms of the sine,
+#   half-sine and parabolic waves
+# final animation takes approx. 10-15 minutes to render fully (tested on an 8GB 2021 iMac),
+#   therefore the full Fourier coefficient graph will be displayed in the written report
+# contains an algorithm that allows position and velocity calculation of only half of the N
+#   oscillators (sine wave only), as the other half are simply the negative of these values
+
+###
+
 def Fermi(data):
 
     # create a function that breaks the dictionary of user inputs down into its constituent parameters
@@ -162,6 +178,19 @@ def Fermi(data):
     fig, (ax_f, ax_s) = plt.subplots(2, 1)
     fig.set_size_inches(12, 10)
     
+    ax_f.plot(coefs[1][:i], color=(42/255, 157/255, 143/255), label='Mode 1')
+    ax_f.plot(coefs[2][:i], color=(233/255, 196/255, 106/255), label='Mode 2')
+    ax_f.plot(coefs[3][:i], color=(244/255, 162/255, 97/255), label='Mode 3')
+    ax_f.plot(coefs[4][:i], color=(231/255, 111/255, 81/255), label='Mode 4')
+    ax_f.legend()
+
+    ax_f.set_xlim([0, tf])
+    ax_f.set_ylim([0, 1])
+
+    ax_f.set_title("Fourier series of lattice oscillations at discrete time steps")
+    ax_f.set_xlabel("time, t [ms]")
+    ax_f.set_ylabel("Fourier Coefficients")
+
     def animate(i):
         # reset the graphs at each step
         ax_s.clear()
@@ -191,10 +220,10 @@ def Fermi(data):
         # --- Fourier Coefficients ---
         ax_f.clear()
 
-        ax_f.plot(coefs[1][:i], color='blue', label='First')
-        ax_f.plot(coefs[2][:i], color='orange', label='Second')
-        ax_f.plot(coefs[3][:i], color='green', label='Third')
-        ax_f.plot(coefs[4][:i], color='red', label='Fourth')
+        ax_f.plot(coefs[1][:i], color='blue', label='Mode 1')
+        ax_f.plot(coefs[2][:i], color='orange', label='Mode 2')
+        ax_f.plot(coefs[3][:i], color='green', label='Mode 3')
+        ax_f.plot(coefs[4][:i], color='red', label='Mode 4')
         ax_f.legend()
 
         ax_f.set_xlim([0, tf])
@@ -206,7 +235,7 @@ def Fermi(data):
         # plot the coefficients of interest
             
 
-    ani = FuncAnimation(fig, animate, frames = n_step, interval = 1, repeat=False)
+    # ani = FuncAnimation(fig, animate, frames = n_step, interval = 1, repeat=False)
 
     # display figure to user
     fig.tight_layout(pad=5.0)
