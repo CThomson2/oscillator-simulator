@@ -27,6 +27,7 @@ import time
 
 ###
 
+# define colour scheme for modal energy graph to be used later
 MPL_COLOUR_SCHEME = {
     "Mode1": (42/255, 157/255, 143/255),
     "Mode2": (233/255, 196/255, 106/255),
@@ -34,7 +35,7 @@ MPL_COLOUR_SCHEME = {
     "Mode4": (231/255, 111/255, 81/255)
 }
 
-def Fermi(data):
+def fermi(data):
 
     # create a function that breaks the dictionary of user inputs down into its constituent parameters
     destruct_dict = lambda dict, *args: (float(dict[arg]) for arg in args)
@@ -207,8 +208,24 @@ def Fermi(data):
         plt.title("Fourier series of lattice oscillations at discrete time steps")
         plt.xlabel("time, t [ms]")
         plt.ylabel("Fourier Coefficients")
+        # plt.show()
+
+        fig = plt.figure(figsize=(15,12))
+        # create list of timestamps
+        snapshots = [slices[int(t)] for t in np.linspace(0, 11400, 20)]
+        tstep = 0
+        for i in range(1, 21):
+            plt.subplot(4, 5, (i, i))
+            plt.plot(positions, snapshots[tstep], marker='o', markersize=3, color=MPL_COLOUR_SCHEME["Mode1"],
+                label=f'time t = {str(tstep * 600) + "ms" if tstep <= 1 else str(round(tstep * 600 / 1000, 3)) + "s"}')
+            tstep += 1
+            plt.ylim([-amp_0, amp_0])
+            plt.legend(loc="upper left")
+        
         plt.show()
         
+        fig.suptitle("Full time evolution of lattice with non-linear term alpha =", alpha)
+        fig.tight_layout(pad=3.0)
         # once we've plotted the above figures, the simulation is complete
         return
 
@@ -256,6 +273,7 @@ def Fermi(data):
         # --- Fourier Coefficients ---
         ax_f.clear()
 
+        # plot the coefficients of interest
         ax_f.plot(c_splines[0][:i], color=MPL_COLOUR_SCHEME["Mode1"], label='Mode 1')
         ax_f.plot(c_splines[1][:i], color=MPL_COLOUR_SCHEME["Mode2"], label='Mode 2')
         ax_f.plot(c_splines[2][:i], color=MPL_COLOUR_SCHEME["Mode3"], label='Mode 3')
@@ -268,7 +286,6 @@ def Fermi(data):
         ax_f.set_title("Fourier series of lattice oscillations at discrete time steps")
         ax_f.set_xlabel("time, t [ms]")
         ax_f.set_ylabel("Fourier Coefficients")
-        # plot the coefficients of interest
             
 
     ani = FuncAnimation(fig, animate, frames = n_step, interval = 1, repeat=False)
@@ -277,7 +294,8 @@ def Fermi(data):
     fig.tight_layout(pad=5.0)
     plt.show()
 
-
+# firstly, the program reads the data from the file view.py submit the user's inputs to
+# this data is saved to a list that is used as the parameter to the main simulation function
 f = open("userdata.txt", "r")
 data = f.readlines()
 for i in range(len(data)):
@@ -291,4 +309,4 @@ if len(data) == 9:
 else:
     data.append(False)
 
-Fermi({'L': data[0], 'tf': data[1], 'N': data[2], 'k': data[3], 'rho': data[4], 'alpha': data[5], 'amp_0': data[6], 'shape_0': data[7], 'anim': data[8]})
+fermi({'L': data[0], 'tf': data[1], 'N': data[2], 'k': data[3], 'rho': data[4], 'alpha': data[5], 'amp_0': data[6], 'shape_0': data[7], 'anim': data[8]})
