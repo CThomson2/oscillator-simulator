@@ -5,6 +5,8 @@ from matplotlib.animation import FuncAnimation
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.fft import fft
+from scipy.signal import find_peaks
+from scipy import interpolate
 from random import randint
 from initial_conditions import get_init
 import time
@@ -33,6 +35,7 @@ def Fermi(data):
     # extract all variables from the data dictionary
     L, tf, N, k, rho, alpha, amp_0 = destruct_dict(data, 'L', 'tf', 'N', 'k', 'rho', 'alpha', 'amp_0')
     shape_0 = data['shape_0']
+    anim = data['anim']
 
     # set following params to integer format so they can be iterated through later
     N = int(N)
@@ -169,27 +172,51 @@ def Fermi(data):
         coefs.append(np.zeros(len(fourier)))
         for i in range(len(fourier)):
             coefs[j][i] = fourier[i][j]
+    
+    peak_energies = []
+    for i in range(1, 5):
+        peaks = list(find_peaks(coefs[i])[0])
+        peak_energies.append(peaks)
 
     # the final stage is plotting the results
-    # using MatPlotLib's animation class, the solution is plotted on a live graph
+    # if the user selected the animation version, it is achieved by using MatPlotLib's animation class,
+    #   where the solution is plotted on a live graph
+    #  otherwise, plot the static Fourier graph and a figure showing the solution at seperate snapshots in time
+
+    # if not anim:
+    #     plt.plot(peak_energies[0], [coefs[1][i] for i in peak_energies[0]] , color=(42/255, 157/255, 143/255), label='Mode 1')
+    #     plt.plot(peak_energies[1], [coefs[2][i] for i in peak_energies[1]] , color=(233/255, 196/255, 106/255), label='Mode 2')
+    #     plt.plot(peak_energies[2], [coefs[3][i] for i in peak_energies[2]] , color=(244/255, 162/255, 97/255), label='Mode 3')
+    #     plt.plot(peak_energies[3], [coefs[4][i] for i in peak_energies[3]] , color=(231/255, 111/255, 81/255), label='Mode 4')
+    #     plt.legend(loc="upper center")
+
+    #     plt.xlim([0, tf])
+    #     plt.ylim([0, 1])
+
+    #     plt.title("Fourier series of lattice oscillations at discrete time steps")
+    #     plt.xlabel("time, t [ms]")
+    #     plt.ylabel("Fourier Coefficients")
+    #     plt.show()
+        
+    #     # once we've plotted the above figures, the simulation is complete
+    #     return
 
     # set up MPL figure with two axes (f: fourier and s: solution)
-    
     fig, (ax_f, ax_s) = plt.subplots(2, 1)
     fig.set_size_inches(12, 10)
-    
-    ax_f.plot(coefs[1][:i], color=(42/255, 157/255, 143/255), label='Mode 1')
-    ax_f.plot(coefs[2][:i], color=(233/255, 196/255, 106/255), label='Mode 2')
-    ax_f.plot(coefs[3][:i], color=(244/255, 162/255, 97/255), label='Mode 3')
-    ax_f.plot(coefs[4][:i], color=(231/255, 111/255, 81/255), label='Mode 4')
-    ax_f.legend()
 
-    ax_f.set_xlim([0, tf])
-    ax_f.set_ylim([0, 1])
 
-    ax_f.set_title("Fourier series of lattice oscillations at discrete time steps")
-    ax_f.set_xlabel("time, t [ms]")
-    ax_f.set_ylabel("Fourier Coefficients")
+    c1 = [coefs[1][i] for i in peak_energies[0]]
+    c2 = [coefs[2][i] for i in peak_energies[1]]
+    c3 = [coefs[3][i] for i in peak_energies[2]]
+    c4 = [coefs[4][i] for i in peak_energies[3]]
+
+    c_splines = []
+    c = [c1, c2, c3, c4]
+    for i in range(len(c)):
+        f_spline = interpolate.splrep(peak_energies[i], c[i], s=0)
+        c_splines.append(interpolate.splev(t_eval, f_spline, der=0))
+
 
     def animate(i):
         # reset the graphs at each step
@@ -220,10 +247,10 @@ def Fermi(data):
         # --- Fourier Coefficients ---
         ax_f.clear()
 
-        ax_f.plot(coefs[1][:i], color='blue', label='Mode 1')
-        ax_f.plot(coefs[2][:i], color='orange', label='Mode 2')
-        ax_f.plot(coefs[3][:i], color='green', label='Mode 3')
-        ax_f.plot(coefs[4][:i], color='red', label='Mode 4')
+        ax_f.plot(c_splines[0][:i], color=(42/255, 157/255, 143/255), label='Mode 1')
+        ax_f.plot(c_splines[1][:i], color=(233/255, 196/255, 106/255), label='Mode 2')
+        ax_f.plot(c_splines[2][:i], color=(244/255, 162/255, 97/255), label='Mode 3')
+        ax_f.plot(c_splines[3][:i], color=(231/255, 111/255, 81/255), label='Mode 4')
         ax_f.legend()
 
         ax_f.set_xlim([0, tf])
@@ -235,16 +262,24 @@ def Fermi(data):
         # plot the coefficients of interest
             
 
-    # ani = FuncAnimation(fig, animate, frames = n_step, interval = 1, repeat=False)
+    ani = FuncAnimation(fig, animate, frames = n_step, interval = 1, repeat=False)
 
     # display figure to user
     fig.tight_layout(pad=5.0)
     plt.show()
 
 
-f = open("demo_data.txt", "r")
+f = open("userdata.txt", "r")
 data = f.readlines()
 for i in range(len(data)):
     data[i] = data[i].strip()
 
-Fermi({'L': data[0], 'tf': data[1], 'N': data[2], 'k': data[3], 'rho': data[4], 'alpha': data[5], 'amp_0': data[6], 'shape_0': data[7]})
+# change the "checked" value of the animate option checkbox to a Boolean for easier manipulation
+# if checkbox was checked, it will be recorded as "on". If not, it won't be recorded and data will
+#   only have eight items
+if len(data) == 9:
+    data[8] = True
+else:
+    data.append(False)
+
+Fermi({'L': data[0], 'tf': data[1], 'N': data[2], 'k': data[3], 'rho': data[4], 'alpha': data[5], 'amp_0': data[6], 'shape_0': data[7], 'anim': data[8]})

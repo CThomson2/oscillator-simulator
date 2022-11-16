@@ -33,6 +33,9 @@
                 <option value="half-sine">Half-sine</option>
                 <option value="parabola">Parabola</option>
             </select>
+            <label for="animate">Select to animate full solution and Fourier Series. <em>Warning: this animation will take 5-15 minutes, 
+                depending on local processor/RAM capabalities</em>.</label>
+            <input onChange="showItems()" class="input" type="checkbox" name="animate">
         </section>
         <input onclick="hideAll()" id="submit" class="hidden" type="submit" value="submit" />
     </form>

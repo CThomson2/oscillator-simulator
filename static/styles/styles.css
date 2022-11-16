@@ -118,6 +118,10 @@ label > h2 {
     color: transparent;
 }
 
+select {
+    padding: 25px;
+}
+
 #init_cond {
     border: 2px solid #d78006;
 }
