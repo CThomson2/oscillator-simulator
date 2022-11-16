@@ -5,9 +5,34 @@ from matplotlib.animation import FuncAnimation
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.fft import fft
+from scipy.signal import find_peaks
+from scipy import interpolate
 from random import randint
 from initial_conditions import get_init
 import time
+
+###
+
+# ----- Introduction -----
+
+### Program Capabilities and Limitations
+
+# will simulate 1D FPUT lattice for any numerical combination of initial conditions,
+#   however in its current version only allows for initial waveforms of the sine,
+#   half-sine and parabolic waves
+# final animation takes approx. 10-15 minutes to render fully (tested on an 8GB 2021 iMac),
+#   therefore the full Fourier coefficient graph will be displayed in the written report
+# contains an algorithm that allows position and velocity calculation of only half of the N
+#   oscillators (sine wave only), as the other half are simply the negative of these values
+
+###
+
+MPL_COLOUR_SCHEME = {
+    "Mode1": (42/255, 157/255, 143/255),
+    "Mode2": (233/255, 196/255, 106/255),
+    "Mode3": (244/255, 162/255, 97/255),
+    "Mode4": (231/255, 111/255, 81/255)
+}
 
 def Fermi(data):
 
@@ -17,6 +42,7 @@ def Fermi(data):
     # extract all variables from the data dictionary
     L, tf, N, k, rho, alpha, amp_0 = destruct_dict(data, 'L', 'tf', 'N', 'k', 'rho', 'alpha', 'amp_0')
     shape_0 = data['shape_0']
+    anim = data['anim']
 
     # set following params to integer format so they can be iterated through later
     N = int(N)
@@ -153,15 +179,54 @@ def Fermi(data):
         coefs.append(np.zeros(len(fourier)))
         for i in range(len(fourier)):
             coefs[j][i] = fourier[i][j]
+  
+    # find the timestamps at which point the waveform peaks
+    # create a list of these timestamps for all four coefficients
+    peak_energies = []
+    # iterating from 1 to 5 as we aren't plotting as the first Fourier Coefficient is invalid (zero)
+    for i in range(1, 5):
+        # use scipy.signal's method for finding local peaks; this returns the time values of the peaks
+        peaks = list(find_peaks(coefs[i])[0])
+        peak_energies.append(peaks)
 
     # the final stage is plotting the results
-    # using MatPlotLib's animation class, the solution is plotted on a live graph
+    # if the user selected the animation version, it is achieved by using MatPlotLib's animation class,
+    #   where the solution is plotted on a live graph
+    #   otherwise, plot the static Fourier graph and a figure showing the solution at seperate snapshots in time
+
+    if not anim:
+        plt.plot(peak_energies[0], [coefs[1][i] for i in peak_energies[0]] , color=MPL_COLOUR_SCHEME["Mode1"], label='Mode 1')
+        plt.plot(peak_energies[1], [coefs[2][i] for i in peak_energies[1]] , color=MPL_COLOUR_SCHEME["Mode2"], label='Mode 2')
+        plt.plot(peak_energies[2], [coefs[3][i] for i in peak_energies[2]] , color=MPL_COLOUR_SCHEME["Mode3"], label='Mode 3')
+        plt.plot(peak_energies[3], [coefs[4][i] for i in peak_energies[3]] , color=MPL_COLOUR_SCHEME["Mode4"], label='Mode 4')
+        plt.legend(loc="upper center")
+
+        plt.xlim([0, tf])
+        plt.ylim([0, 1])
+
+        plt.title("Fourier series of lattice oscillations at discrete time steps")
+        plt.xlabel("time, t [ms]")
+        plt.ylabel("Fourier Coefficients")
+        plt.show()
+        
+        # once we've plotted the above figures, the simulation is complete
+        return
 
     # set up MPL figure with two axes (f: fourier and s: solution)
-    
     fig, (ax_f, ax_s) = plt.subplots(2, 1)
     fig.set_size_inches(12, 10)
-    
+
+    # create a multi-dimensional list that stores, for each coefficient, the peak f(t) values
+    c = [[coefs[i + 1][j] for j in peak_energies[i]] for i in range(0, 4)]
+
+    # create spline arrays for all coefficients such that they equal n_step in length and can 
+    #   thus be animated over for n_step frames
+    c_splines = []
+    for i in range(len(c)):
+        f_spline = interpolate.splrep(peak_energies[i], c[i], s=0)
+        c_splines.append(interpolate.splev(t_eval, f_spline, der=0))
+
+
     def animate(i):
         # reset the graphs at each step
         ax_s.clear()
@@ -191,10 +256,10 @@ def Fermi(data):
         # --- Fourier Coefficients ---
         ax_f.clear()
 
-        ax_f.plot(coefs[1][:i], color='blue', label='First')
-        ax_f.plot(coefs[2][:i], color='orange', label='Second')
-        ax_f.plot(coefs[3][:i], color='green', label='Third')
-        ax_f.plot(coefs[4][:i], color='red', label='Fourth')
+        ax_f.plot(c_splines[0][:i], color=MPL_COLOUR_SCHEME["Mode1"], label='Mode 1')
+        ax_f.plot(c_splines[1][:i], color=MPL_COLOUR_SCHEME["Mode2"], label='Mode 2')
+        ax_f.plot(c_splines[2][:i], color=MPL_COLOUR_SCHEME["Mode3"], label='Mode 3')
+        ax_f.plot(c_splines[3][:i], color=MPL_COLOUR_SCHEME["Mode4"], label='Mode 4')
         ax_f.legend()
 
         ax_f.set_xlim([0, tf])
@@ -213,9 +278,17 @@ def Fermi(data):
     plt.show()
 
 
-f = open("demo_data.txt", "r")
+f = open("userdata.txt", "r")
 data = f.readlines()
 for i in range(len(data)):
     data[i] = data[i].strip()
 
-Fermi({'L': data[0], 'tf': data[1], 'N': data[2], 'k': data[3], 'rho': data[4], 'alpha': data[5], 'amp_0': data[6], 'shape_0': data[7]})
+# change the "checked" value of the animate option checkbox to a Boolean for easier manipulation
+# if checkbox was checked, it will be recorded as "on". If not, it won't be recorded and data will
+#   only have eight items
+if len(data) == 9:
+    data[8] = True
+else:
+    data.append(False)
+
+Fermi({'L': data[0], 'tf': data[1], 'N': data[2], 'k': data[3], 'rho': data[4], 'alpha': data[5], 'amp_0': data[6], 'shape_0': data[7], 'anim': data[8]})

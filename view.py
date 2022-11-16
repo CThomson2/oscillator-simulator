@@ -17,7 +17,7 @@ def get_result():
     if request.method == 'POST':
         result = request.form
         data = result.to_dict()
-        # print(data)
+        
         f = open('./userdata.txt', 'w')
         for p in data:
             f.write(f'{data[p]}\n')
