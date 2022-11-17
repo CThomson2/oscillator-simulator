@@ -8,8 +8,9 @@ from scipy.fft import fft
 from scipy.signal import find_peaks
 from scipy import interpolate
 from random import randint
+
+# import modules
 from initial_conditions import get_init
-import time
 
 ###
 
@@ -27,7 +28,7 @@ import time
 
 ###
 
-# define colour scheme for modal energy graph to be used later
+# define colour scheme for modal energy graph, to be used when plotting
 MPL_COLOUR_SCHEME = {
     "Mode1": (42/255, 157/255, 143/255),
     "Mode2": (233/255, 196/255, 106/255),
@@ -35,7 +36,10 @@ MPL_COLOUR_SCHEME = {
     "Mode4": (231/255, 111/255, 81/255)
 }
 
-def fermi(data):
+def fermi_sim(data):
+
+    # ----- DEFINE PARAMETERS, USER DATA AND INITIAL CONDITIONS ----- #
+    # --------------------------------------------------------------- #
 
     # create a function that breaks the dictionary of user inputs down into its constituent parameters
     destruct_dict = lambda dict, *args: (float(dict[arg]) for arg in args)
@@ -49,8 +53,8 @@ def fermi(data):
     N = int(N)
     tf = int(tf)
 
-    dt = 1
     # calculate total time steps the variables of interest will be recorded at
+    dt = 1
     n_step = int(tf/dt)
     # calculate stepsize (distance between oscillators) and mass of each oscillator
     h = L / (N - 1)
@@ -78,17 +82,21 @@ def fermi(data):
     x[0] = get_init(L, N, amp_0, shape_0, positions)
     u[0] = np.zeros(N)
 
-    # define model function to be used in solve_ivp later
+
+    # ----- RUNGE KUTTA LOOP ----- #
+    # ---------------------------- #
+
+    # define model function to be used as an argument in solve_ivp later
     # this function returns the derivatives (slopes) of all input variables
     def model(t, y):
         
-        if shape_0 == 'sine':
         # to minimise the computations required, we make use of the sine wave's symmetry - present
         #   even in the non-linear case!
-        # instead of evaluating the slopes of all N oscillators, we only need to do so for the first
-        #   half, then invert the values for the second half of the wave
-        # there is a notable difference in the algorithm depending on N's parity (i.e. odd or even)
+        if shape_0 == 'sine':
 
+            # instead of evaluating the slopes of all N oscillators, we only need to do so for the first
+            #   half, then invert the values for the second half of the wave
+            # there is a notable difference in the algorithm depending on N's parity (i.e. odd or even)
             if N % 2 == 0:
                 # extract the displacements and velocities from y array
                 x = y[:int(len(y) / 4)]
@@ -145,7 +153,7 @@ def fermi(data):
     y0 = np.concatenate([x[0], u[0]])
 
     # use scipy's solve_ivp method to solve the Fermi-Pasta problem using Runge-Kutta (4th order)
-
+    
     t_eval = np.linspace(0, tf, num=n_step)
     res = solve_ivp(model, [0, tf], y0, t_eval=t_eval)
 
@@ -161,7 +169,8 @@ def fermi(data):
             slices[i][j] = res.y[j][i]
 
 
-    # FOURIER ANALYSIS
+    # ----- FOURIER ANALYSIS ----- #
+    # ---------------------------- #
 
     # create array of fourier coefficients for the N oscillators at every time step
     fourier = []
@@ -173,7 +182,7 @@ def fermi(data):
 
     # we now have the Fourier series for every timestep, but we want to display the evolution
     #   of the coefficients over time.
-    # invert the Fourier series by swapping i-th and j-th with their converse and appending
+    # invert the Fourier series by swapping i-th, j-th values with their converse and appending
     #   to a new coefficients array
     coefs = []
     for j in range(len(fourier[1])):
@@ -190,16 +199,33 @@ def fermi(data):
         peaks = list(find_peaks(coefs[i])[0])
         peak_energies.append(peaks)
 
+
+    # ----- GRAPHING SOLUTION ----- #
+    # ----------------------------- #
+
     # the final stage is plotting the results
     # if the user selected the animation version, it is achieved by using MatPlotLib's animation class,
     #   where the solution is plotted on a live graph
     #   otherwise, plot the static Fourier graph and a figure showing the solution at seperate snapshots in time
 
     if not anim:
-        plt.plot(peak_energies[0], [coefs[1][i] for i in peak_energies[0]] , color=MPL_COLOUR_SCHEME["Mode1"], label='Mode 1')
-        plt.plot(peak_energies[1], [coefs[2][i] for i in peak_energies[1]] , color=MPL_COLOUR_SCHEME["Mode2"], label='Mode 2')
-        plt.plot(peak_energies[2], [coefs[3][i] for i in peak_energies[2]] , color=MPL_COLOUR_SCHEME["Mode3"], label='Mode 3')
-        plt.plot(peak_energies[3], [coefs[4][i] for i in peak_energies[3]] , color=MPL_COLOUR_SCHEME["Mode4"], label='Mode 4')
+        # plot Fourier coefficients (modal energy over time)
+        plt.plot(
+            peak_energies[0], [coefs[1][i] for i in peak_energies[0]],
+            color=MPL_COLOUR_SCHEME["Mode1"], label='Mode 1'
+        )
+        plt.plot(
+            peak_energies[1], [coefs[2][i] for i in peak_energies[1]],
+            color=MPL_COLOUR_SCHEME["Mode2"], label='Mode 2'
+        )
+        plt.plot(
+            peak_energies[2], [coefs[3][i] for i in peak_energies[2]],
+            color=MPL_COLOUR_SCHEME["Mode3"], label='Mode 3'
+        )
+        plt.plot(
+            peak_energies[3], [coefs[4][i] for i in peak_energies[3]],
+            color=MPL_COLOUR_SCHEME["Mode4"], label='Mode 4'
+        )
         plt.legend(loc="upper center")
 
         plt.xlim([0, tf])
@@ -208,15 +234,15 @@ def fermi(data):
         plt.title("Fourier series of lattice oscillations at discrete time steps")
         plt.xlabel("time, t [ms]")
         plt.ylabel("Fourier Coefficients")
-        # plt.show()
 
+        # plot series of time-seperated lattice displacements
         fig = plt.figure(figsize=(15,12))
         # create list of timestamps
-        snapshots = [slices[int(t)] for t in np.linspace(0, 11400, 20)]
+        snapshots = [slices[int(t)] for t in np.linspace(0, 300000-15000, 20)]
         tstep = 0
         for i in range(1, 21):
             plt.subplot(4, 5, (i, i))
-            plt.plot(positions, snapshots[tstep], marker='o', markersize=3, color=MPL_COLOUR_SCHEME["Mode1"],
+            plt.plot(positions, snapshots[tstep], marker='o', markersize=3, color=MPL_COLOUR_SCHEME["Mode4"],
                 label=f'time t = {str(tstep * 600) + "ms" if tstep <= 1 else str(round(tstep * 600 / 1000, 3)) + "s"}')
             tstep += 1
             plt.ylim([-amp_0, amp_0])
@@ -233,7 +259,8 @@ def fermi(data):
     fig, (ax_f, ax_s) = plt.subplots(2, 1)
     fig.set_size_inches(12, 10)
 
-    # create a multi-dimensional list that stores, for each coefficient, the peak f(t) values
+    # using a doubele list comprehension, create a multi-dimensional list that stores,
+    #   for each coefficient, the peak f(t) values
     c = [[coefs[i + 1][j] for j in peak_energies[i]] for i in range(0, 4)]
 
     # create spline arrays for all coefficients such that they equal n_step in length and can 
@@ -253,7 +280,7 @@ def fermi(data):
         # the following lines change the graph colour over time
         # each RGB channel follows a different sinusoid, with the peaks of all
         #   three seperated to provide periodic chromatic shifting
-        # the amplitude is in order to prevent unaesthethic light colours
+        # the 0.75 amplitude is in order to prevent unaesthethic light colours
         r = abs(0.75*np.cos(0.5 * (i / 100 * 2 * np.pi + np.pi)))     
         g = abs(0.75*np.sin(0.5 * (i / 100 * 2 * np.pi) + 0.2 * np.pi))
         b = 0.7
@@ -263,6 +290,7 @@ def fermi(data):
         ax_s.legend(loc="upper right")
         ax_s.set_xlim([0,L])
         ax_s.set_ylim([-amp_0, amp_0])
+        plt.fill_between(positions, -1, slices[i], color=MPL_COLOUR_SCHEME["Mode4"])
 
 
         # annotate figure
@@ -294,7 +322,9 @@ def fermi(data):
     fig.tight_layout(pad=5.0)
     plt.show()
 
-# firstly, the program reads the data from the file view.py submit the user's inputs to
+
+
+# firstly, the program reads the data from the file view.py, where we submit the user's inputs to
 # this data is saved to a list that is used as the parameter to the main simulation function
 f = open("userdata.txt", "r")
 data = f.readlines()
@@ -309,4 +339,4 @@ if len(data) == 9:
 else:
     data.append(False)
 
-fermi({'L': data[0], 'tf': data[1], 'N': data[2], 'k': data[3], 'rho': data[4], 'alpha': data[5], 'amp_0': data[6], 'shape_0': data[7], 'anim': data[8]})
+fermi_sim({'L': data[0], 'tf': data[1], 'N': data[2], 'k': data[3], 'rho': data[4], 'alpha': data[5], 'amp_0': data[6], 'shape_0': data[7], 'anim': data[8]})
