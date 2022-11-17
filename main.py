@@ -7,7 +7,7 @@ from scipy.integrate import solve_ivp
 from scipy.fft import fft
 from scipy.signal import find_peaks
 from scipy import interpolate
-from random import randint
+from random import randint, gauss, random
 
 # import modules
 from initial_conditions import get_init
@@ -36,7 +36,7 @@ MPL_COLOUR_SCHEME = {
     "Mode4": (231/255, 111/255, 81/255)
 }
 
-def fermi_sim(data):
+def fermi_sim(data, tau):
 
     # ----- DEFINE PARAMETERS, USER DATA AND INITIAL CONDITIONS ----- #
     # --------------------------------------------------------------- #
@@ -68,14 +68,24 @@ def fermi_sim(data):
     x = []
     u = []
 
+
+    ### ---- TASK E ---- ###
+    # draw tolerances from normal distribution
+    tol = np.zeros(N)
+    for i in range(N):
+        tol[i] = gauss(1, 1/3 * 0.01 * tau)
+    # print(tol)
+    ### ---- TASK E ---- ###
+
+
     # add empty array to hold values for each slice in time
     for i in range(n_step):
         x.append( np.zeros(N) )
         u.append( np.zeros(N) )
 
     # define governing acceleration formula with a list parameter of relevant oscillator displacements
-    def get_acc(osc):
-        return (k / h) / m * (osc[2] + osc[0] - 2 * osc[1]) * (1 + alpha * (osc[2] - osc[0]))
+    def get_acc(osc, i):
+        return (k / h) / m * (tol[i+1]*osc[2] + tol[i-1]*osc[0] - 2 * tol[i]*osc[1]) * (1 + alpha * (tol[i+1]*osc[2] - tol[i-1]*osc[0]))
 
     # set the displacements and velocities at t = 0 to the initial conditions derived from user input
     #   and calculated in seperate file
@@ -92,7 +102,7 @@ def fermi_sim(data):
         
         # to minimise the computations required, we make use of the sine wave's symmetry - present
         #   even in the non-linear case!
-        if shape_0 == 'sine':
+        if shape_0 == 'youshallnotpass':
 
             # instead of evaluating the slopes of all N oscillators, we only need to do so for the first
             #   half, then invert the values for the second half of the wave
@@ -109,10 +119,10 @@ def fermi_sim(data):
                 # fill dv/dt array using acceleration function and provided displacement values
                 # begin range at index 1 because of the boundary condition
                 for i in range(1, len(fu) - 1):
-                    fu[i] = get_acc([ x[i - 1], x[i], x[i + 1] ])
+                    fu[i] = get_acc([ x[i - 1], x[i], x[i + 1] ], i)
                 # -x[-1] is simply the next oscillator in line, and lies on the other side of the x-axis
                 #   as x[-1]
-                fu[-1] = get_acc([ x[-2], x[-1], -x[-1] ])
+                fu[-1] = get_acc([ x[-2], x[-1], -x[-1] ], -1)
 
                 # concatenate the derivaties to the the corresponding reversed negative derivatives (envision
                 #   the sine wave if this is unclear)
@@ -129,8 +139,8 @@ def fermi_sim(data):
                 fu = np.zeros(math.floor(N/2))
 
                 for i in range(1, len(fu) - 1):
-                    fu[i] = get_acc([ x[i - 1], x[i], x[i + 1] ])
-                fu[-1] = get_acc([ x[-2], x[-1], 0 ])
+                    fu[i] = get_acc([ x[i - 1], x[i], x[i + 1] ], i)
+                fu[-1] = get_acc([ x[-2], x[-1], 0 ], -1)
 
                 return np.concatenate([fx, [0], [-f for f in reversed(fx)], fu, [0], [-f for f in reversed(fu)]])
         
@@ -144,7 +154,7 @@ def fermi_sim(data):
 
         # fill dv/dt array using acceleration function and provided displacement values
         for i in range(1, N-1):
-            fu[i] = get_acc([ x[i - 1], x[i], x[i + 1] ])
+            fu[i] = get_acc([ x[i - 1], x[i], x[i + 1] ], i)
 
         return np.concatenate([fx, fu])
 
@@ -212,21 +222,21 @@ def fermi_sim(data):
         # plot Fourier coefficients (modal energy over time)
         plt.plot(
             peak_energies[0], [coefs[1][i] for i in peak_energies[0]],
-            color=MPL_COLOUR_SCHEME["Mode1"], label='Mode 1'
+            color=MPL_COLOUR_SCHEME["Mode1"], label='Mode 1', linewidth='0.5'
         )
         plt.plot(
             peak_energies[1], [coefs[2][i] for i in peak_energies[1]],
-            color=MPL_COLOUR_SCHEME["Mode2"], label='Mode 2'
+            color=MPL_COLOUR_SCHEME["Mode2"], label='Mode 2', linewidth='0.5'
         )
         plt.plot(
             peak_energies[2], [coefs[3][i] for i in peak_energies[2]],
-            color=MPL_COLOUR_SCHEME["Mode3"], label='Mode 3'
+            color=MPL_COLOUR_SCHEME["Mode3"], label='Mode 3', linewidth='0.5'
         )
         plt.plot(
             peak_energies[3], [coefs[4][i] for i in peak_energies[3]],
-            color=MPL_COLOUR_SCHEME["Mode4"], label='Mode 4'
+            color=MPL_COLOUR_SCHEME["Mode4"], label='Mode 4', linewidth='0.5'
         )
-        plt.legend(loc="upper center")
+        # plt.legend(loc="upper center")
 
         plt.xlim([0, tf])
         plt.ylim([0, 1])
@@ -235,10 +245,15 @@ def fermi_sim(data):
         plt.xlabel("time, t [ms]")
         plt.ylabel("Fourier Coefficients")
 
+        rand = round(random(), 5)
+        print(rand)
+        plt.savefig(f'./tolrTestOut/{rand}.png')
+        return
+
         # plot series of time-seperated lattice displacements
         fig = plt.figure(figsize=(15,12))
         # create list of timestamps
-        snapshots = [slices[int(t)] for t in np.linspace(0, 300000-15000, 20)]
+        snapshots = [slices[int(t)] for t in np.linspace(0, 11400, 20)]
         tstep = 0
         for i in range(1, 21):
             plt.subplot(4, 5, (i, i))
@@ -250,7 +265,6 @@ def fermi_sim(data):
         
         plt.show()
         
-        fig.suptitle("Full time evolution of lattice with non-linear term alpha =", alpha)
         fig.tight_layout(pad=3.0)
         # once we've plotted the above figures, the simulation is complete
         return
@@ -322,6 +336,8 @@ def fermi_sim(data):
     fig.tight_layout(pad=5.0)
     plt.show()
 
+    return
+
 
 
 # firstly, the program reads the data from the file view.py, where we submit the user's inputs to
@@ -339,4 +355,5 @@ if len(data) == 9:
 else:
     data.append(False)
 
-fermi_sim({'L': data[0], 'tf': data[1], 'N': data[2], 'k': data[3], 'rho': data[4], 'alpha': data[5], 'amp_0': data[6], 'shape_0': data[7], 'anim': data[8]})
+# fermi_sim({'L': data[0], 'tf': data[1], 'N': data[2], 'k': data[3], 'rho': data[4],
+    #   'alpha': data[5], 'amp_0': data[6], 'shape_0': data[7], 'anim': data[8]}, tau)
