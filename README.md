@@ -48,7 +48,7 @@ __## [Video Demonstration (Non-Linear Case)](https://vimeo.com/768030094)__
 
 - dx_i/dt for every oscillator i, i.e. N simultaneous equations
 
-### Perform RungeKutta OR Euler method on d^2x/dt^2 to determine discretised velocities
+### Perform RungeKutta 4th-order method on d^2x/dt^2 to determine discretised velocities
 
 - #### Create array of arrays, where each array holds all velocity values for one of N oscillators
 
