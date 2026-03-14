@@ -37,8 +37,8 @@ __## [Video Demonstration (Non-Linear Case)](https://vimeo.com/768030094)__
 
 #### Python integration
 
-- Take data from user and call main "simulate()" function with paramaters
-- Represent processed data and solution on new HTML page to show user
+- Take data from user and call `simulate()` with parameters
+- Present processed data and solution on new HTML page to show user
 
 ---
 
@@ -46,9 +46,9 @@ __## [Video Demonstration (Non-Linear Case)](https://vimeo.com/768030094)__
 
 ### Simultaneous Equations
 
-- dx_i/dt for every oscillator i, i.e. N simultaneous equations
+- `dx_i/dt` for every oscillator `i`, i.e. `N` simultaneous equations
 
-### Perform RungeKutta 4th-order method on d^2x/dt^2 to determine discretised velocities
+### Perform RungeKutta 4th-order method on `d^2x/dt^2` to determine discretised velocities
 
 - #### Create array of arrays, where each array holds all velocity values for one of N oscillators
 
